@@ -1,0 +1,8 @@
+config_id,libelle,budget_min,budget_max,composants
+cfg-defaut-rtx3060,Défaut · Ryzen 5 5600 + RTX 3060 12 Go,600,900,cpu-5600|gpu-rtx3060-12g|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-ax120
+cfg-defaut-rtx5060,Défaut · Ryzen 5 5600 + RTX 5060,600,900,cpu-5600|gpu-rtx5060|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-ax120
+cfg-defaut-rx9060xt,Défaut · Ryzen 5 5600 + RX 9060 XT,600,900,cpu-5600|gpu-rx9060xt|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-ax120
+cfg-eco-rx7600,Éco · Ryzen 5 5600 + RX 7600,400,700,cpu-5600|gpu-rx7600|mb-a520|ram-16-3200|ssd-500|psu-550|case-atx|cooler-ax120
+cfg-haut-5800x3d,Haut · Ryzen 7 5800X3D + RTX 5060 Ti 16 Go,900,1200,cpu-5800x3d|gpu-rtx5060ti-16g|mb-x570|ram-32-3600|ssd-2to|psu-750|case-fractal|cooler-pa120
+cfg-r9-5900xt,Ryzen 9 5900XT + RTX 5060,800,1200,cpu-5900xt|gpu-rtx5060|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-pa120
+cfg-r9-5950x,Ryzen 9 5950X + RTX 5060 Ti 16 Go,900,1200,cpu-5950x|gpu-rtx5060ti-16g|mb-x570|ram-32-3600|ssd-1to|psu-750|case-fractal|cooler-lf3-240

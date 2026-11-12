@@ -1,0 +1,74 @@
+horodatage,date,creneau,produit_id,boutique,titre,prix_eur,en_stock,marketplace,nb_offres_valides,url
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5600,LDLC,AMD Ryzen 5 5600 (3.5 GHz / 4.4 GHz),124.95,0,0,1,https://www.ldlc.com/fiche/PB00699110.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5700x,LDLC,AMD Ryzen 7 5700X (3.4 GHz / 4.6 GHz),189.95,1,0,6,https://www.ldlc.com/fiche/PB00712942.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rx7600,LDLC,ASUS Radeon RX 7600 DUAL O8G,529.95,1,0,2,https://www.ldlc.com/fiche/PB00555881.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx3060-12g,LDLC,Gainward GeForce RTX 3060 Python II OC,579.95,1,0,3,https://www.ldlc.com/fiche/PB00748326.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx5060,LDLC,Gainward GeForce RTX 5060 Ghost 8GB,629.95,1,0,22,https://www.ldlc.com/fiche/PB00683652.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rx9060xt,LDLC,Sapphire PULSE AMD Radeon RX 9060 XT 8GB,619.95,1,0,13,https://www.ldlc.com/fiche/PB00686664.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx5060ti-16g,LDLC,Gainward GeForce RTX 5060 Ti Python III 16GB,1029.95,1,0,25,https://www.ldlc.com/fiche/PB00677295.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,mb-a520,LDLC,ASRock A520M-HVS,62.95,1,0,6,https://www.ldlc.com/fiche/PB00357332.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,mb-b550,LDLC,ASUS PRIME B550M-K ARGB,94.95,1,0,27,https://www.ldlc.com/fiche/PB00569529.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-16-3200,LDLC,Kingsman Gaming DDR4 Innovator 16 Go 3200 MHz CL22 - Noir,149.95,1,0,22,https://www.ldlc.com/fiche/PB00748158.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-32-3200,LDLC,Textorm 32 Go (2x 16 Go) DDR4 3200 MHz CL16,319.94,1,0,12,https://www.ldlc.com/fiche/PB00392938.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-32-3600,LDLC,G.Skill RipJaws 5 Series Noir 32 Go (2 x 16 Go) DDR4 3600 MHz CL18,329.95,1,0,8,https://www.ldlc.com/fiche/PB00278896.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-500,LDLC,Kingston SSD NV3 500 Go,129.95,1,0,4,https://www.ldlc.com/fiche/PB00630080.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-1to,LDLC,Kingston SSD NV3 1 To,189.95,1,0,22,https://www.ldlc.com/fiche/PB00630081.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-2to,LDLC,Western Digital SSD WD Green SN3000 2 To (G1E),289.95,1,0,24,https://www.ldlc.com/fiche/PB00747546.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-550,LDLC,Textorm TX550+,59.95,1,0,9,https://www.ldlc.com/fiche/PB00756865.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-650,LDLC,Seasonic CORE BC-650,49.95,1,0,21,https://www.ldlc.com/fiche/PB00717301.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-750,LDLC,Seasonic CORE BC-750,59.95,1,0,36,https://www.ldlc.com/fiche/PB00717303.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,case-atx,LDLC,Antec P20CE,104.95,1,0,1,https://www.ldlc.com/fiche/PB00527704.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,case-fractal,LDLC,Fractal Design Pop 2 Vision RGB (Noir),74.95,1,0,35,https://www.ldlc.com/fiche/PB00738153.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-ax120,LDLC,Thermalright Assassin X 120 Refined SE ARGB,18.77,1,0,7,https://www.ldlc.com/fiche/PB00745883.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-pa120,LDLC,Thermalright Peerless Assassin 120 SE,44.95,1,0,5,https://www.ldlc.com/fiche/PB00581740.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-lf3-240,LDLC,Arctic Liquid Freezer III Pro 240 (Noir),79.95,1,0,3,https://www.ldlc.com/fiche/PB00686432.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5600,Materiel.net,AMD Ryzen 5 5600 - Version Bulk,124.95,0,0,1,https://www.materiel.net/produit/202508120031.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5700x,Materiel.net,AMD Ryzen 7 5700X - Version tray,189.95,1,0,3,https://www.materiel.net/produit/202510290050.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5800x3d,Materiel.net,AMD Ryzen 7 5800X3D 10th Anniversary Edition,399.95,1,0,1,https://www.materiel.net/produit/202606190036.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rx7600,Materiel.net,Asus Radeon RX 7600 DUAL OC,529.95,1,0,3,https://www.materiel.net/produit/202304270003.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx5060,Materiel.net,MSI GeForce RTX 5060 8G VENTUS 2X OC,649.95,1,0,8,https://www.materiel.net/produit/202504280063.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rx9060xt,Materiel.net,Sapphire PULSE AMD Radeon RX 9060 XT 8GB,619.95,1,0,14,https://www.materiel.net/produit/202505060011.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx5060ti-16g,Materiel.net,Asus PRIME GeForce RTX 5060 Ti 16GB GDDR7 OC Edition,1044.95,1,0,5,https://www.materiel.net/produit/202610230035.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,mb-a520,Materiel.net,ASRock A520M-HVS,62.95,1,0,7,https://www.materiel.net/produit/202008040042.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,mb-b550,Materiel.net,MSI PRO B550M-B,92.95,1,0,28,https://www.materiel.net/produit/202607160086.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-16-3200,Materiel.net,Kingsman Gaming DDR4 Innovator - 1 x 16 Go (16 Go) - DDR4 - 3200 MHz - CL2 Noir,149.95,1,0,20,https://www.materiel.net/produit/202606110036.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-32-3200,Materiel.net,Textorm - 2 x 16 Go (32 Go) - DDR4 3200 MHz - CL16,319.94,1,0,8,https://www.materiel.net/produit/202011230066.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-32-3600,Materiel.net,G.Skill Ripjaws V Black - 2 x 16 Go (32 Go) - DDR4 3600 MHz CL18,329.95,1,0,8,https://www.materiel.net/produit/201909300080.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-500,Materiel.net,Kingston NV3 - 500 Go,129.95,1,0,7,https://www.materiel.net/produit/202407270001.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-1to,Materiel.net,Kingston NV3 - 1 To,189.95,1,0,22,https://www.materiel.net/produit/202407270002.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-2to,Materiel.net,Western Digital SSD WD Green SN3000 2 To,289.95,1,0,45,https://www.materiel.net/produit/202607080043.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-550,Materiel.net,Textorm TX550+,59.95,1,0,8,https://www.materiel.net/produit/202604240014.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-650,Materiel.net,Seasonic CORE BC-650,49.95,1,0,21,https://www.materiel.net/produit/202506300077.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-750,Materiel.net,Seasonic CORE BC-750,59.95,1,0,33,https://www.materiel.net/produit/202506300078.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,case-atx,Materiel.net,Antec AX20,47.45,1,0,15,https://www.materiel.net/produit/202304240017.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,case-fractal,Materiel.net,Fractal Design Pop 2 Vision RGB - Noir,74.95,1,0,34,https://www.materiel.net/produit/202512150071.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-ax120,Materiel.net,Thermalright Assassin X 120 Refined SE ARGB,18.77,1,0,7,https://www.materiel.net/produit/202606190038.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-pa120,Materiel.net,Thermalright Peerless Assassin 120 SE - Noir,44.95,1,0,5,https://www.materiel.net/produit/202310260033.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-lf3-240,Materiel.net,Arctic Liquid Freezer III Pro 240 - Noir,79.95,1,0,3,https://www.materiel.net/produit/202505190019.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5600,Rue du Commerce,AMD Ryzen 5 5600 (3.5 GHz / 4.4 GHz),119.99,0,0,1,https://www.rueducommerce.fr/p/r25088945033.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5700x,Rue du Commerce,AMD Ryzen 7 5700X (3.4 GHz / 4.6 GHz),179.99,1,0,2,https://www.rueducommerce.fr/p/r25119171244.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5800x3d,Rue du Commerce,AMD Ryzen 7 5800X3D,406.34,1,1,1,https://www.rueducommerce.fr/p/m26079759517.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5900xt,Rue du Commerce,AMD Ryzen 9 5900XT (3.3 GHz / 4.8 GHz),364.18,1,1,1,https://www.rueducommerce.fr/bons-plans/o23158/
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cpu-5950x,Rue du Commerce,AMD Ryzen 9 5950X (3.4 GHz / 4.9 GHz),415.55,1,1,16,https://www.rueducommerce.fr/bons-plans/o23158/
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rx7600,Rue du Commerce,ASUS Dual -RX7600-O8G-V2 AMD Radeon RX 7600 8 Go GDDR6,519.99,1,0,1,https://www.rueducommerce.fr/p/r24060018105.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx3060-12g,Rue du Commerce,Palit GeForce RTX 3060 Infinity 2 OC 12 Go,540.65,1,1,1,https://www.rueducommerce.fr/p/m26100039685.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx5060,Rue du Commerce,Gigabyte GeForce RTX 5060 WINDFORCE MAX OC 8G,629.99,1,0,5,https://www.rueducommerce.fr/p/r25099022613.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rx9060xt,Rue du Commerce,ASUS Dual Radeon RX 9060 XT 8GB GDDR6,699.99,1,0,2,https://www.rueducommerce.fr/p/r25068787208.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,gpu-rtx5060ti-16g,Rue du Commerce,Pny RTX 5060 Ti 16Go,944.96,1,1,2,https://www.rueducommerce.fr/p/m26099872188.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,mb-a520,Rue du Commerce,ASRock A520M HVS,59.99,1,0,5,https://www.rueducommerce.fr/p/r24060013321.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,mb-b550,Rue du Commerce,Gigabyte B550M AORUS ELITE,99.99,1,0,18,https://www.rueducommerce.fr/p/r24074092718.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,mb-x570,Rue du Commerce,MSI AMD X570 MPG GAMING PLUS - ATX,149.00,1,1,27,https://www.rueducommerce.fr/p/r24060009994.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-16-3200,Rue du Commerce,Kingsman Gaming DDR4 Innovator 16 Go 3200 MHz CL22 - Noir,149.99,1,0,5,https://www.rueducommerce.fr/p/r26079746993.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-32-3200,Rue du Commerce,Silicon-Power XPOWER Zenith - 32 Go,169.23,1,1,41,https://www.rueducommerce.fr/p/m24072750550.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ram-32-3600,Rue du Commerce,G.Skill Trident Z RGB 32 Go (2 x 16 Go) DDR4 3600 MHz CL18,329.99,1,0,3,https://www.rueducommerce.fr/p/r24074092499.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-500,Rue du Commerce,Lexar NM610 Pro 500Go M.2,93.67,1,1,46,https://www.rueducommerce.fr/p/m25068830905.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-1to,Rue du Commerce,Samsung SSD 990 M.2 PCIe NVMe 1 To,199.99,1,0,3,https://www.rueducommerce.fr/p/r26079740429.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,ssd-2to,Rue du Commerce,Western Digital WD Blue SN570 NVMe - 2 To,256.41,1,1,46,https://www.rueducommerce.fr/p/r24060016011.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-550,Rue du Commerce,Corsair CX550 80PLUS Bronze (2023),54.99,1,0,5,https://www.rueducommerce.fr/p/r24060018554.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-650,Rue du Commerce,Cooler Master MWE Bronze 650W V3,56.99,1,0,3,https://www.rueducommerce.fr/p/r24107833583.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,psu-750,Rue du Commerce,Cooler Master MWE Bronze 750W V3,64.99,1,0,5,https://www.rueducommerce.fr/p/r24107833582.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,case-atx,Rue du Commerce,Natec Aracanta Noir,36.46,1,1,48,https://www.rueducommerce.fr/p/m25088940831.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,case-fractal,Rue du Commerce,Fractal Design Pop 2 Vision RGB (Noir),74.99,1,0,11,https://www.rueducommerce.fr/p/r26049545842.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-ax120,Rue du Commerce,Thermalright Assassin X 120 Refined SE ARGB,18.99,1,0,6,https://www.rueducommerce.fr/p/r26069639769.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-pa120,Rue du Commerce,Thermalright Peerless Assassin 120 SE BLACK,44.99,1,0,4,https://www.rueducommerce.fr/p/r24074098819.html
+2026-11-12T21:02:22+01:00,2026-11-12,manuel,cooler-lf3-240,Rue du Commerce,Arctic Liquid Freezer III Pro 240 (Noir),66.42,1,1,6,https://www.rueducommerce.fr/p/r25068812767.html
