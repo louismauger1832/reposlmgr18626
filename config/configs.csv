@@ -1,8 +1,11 @@
 config_id,libelle,budget_min,budget_max,composants
-cfg-defaut-rtx3060,Défaut · Ryzen 5 5600 + RTX 3060 12 Go,600,900,cpu-5600|gpu-rtx3060-12g|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-ax120
-cfg-defaut-rtx5060,Défaut · Ryzen 5 5600 + RTX 5060,600,900,cpu-5600|gpu-rtx5060|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-ax120
-cfg-defaut-rx9060xt,Défaut · Ryzen 5 5600 + RX 9060 XT,600,900,cpu-5600|gpu-rx9060xt|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-ax120
-cfg-eco-rx7600,Éco · Ryzen 5 5600 + RX 7600,400,700,cpu-5600|gpu-rx7600|mb-a520|ram-16-3200|ssd-500|psu-550|case-atx|cooler-ax120
-cfg-haut-5800x3d,Haut · Ryzen 7 5800X3D + RTX 5060 Ti 16 Go,900,1200,cpu-5800x3d|gpu-rtx5060ti-16g|mb-x570|ram-32-3600|ssd-2to|psu-750|case-fractal|cooler-pa120
-cfg-r9-5900xt,Ryzen 9 5900XT + RTX 5060,800,1200,cpu-5900xt|gpu-rtx5060|mb-b550|ram-32-3200|ssd-1to|psu-650|case-atx|cooler-pa120
-cfg-r9-5950x,Ryzen 9 5950X + RTX 5060 Ti 16 Go,900,1200,cpu-5950x|gpu-rtx5060ti-16g|mb-x570|ram-32-3600|ssd-1to|psu-750|case-fractal|cooler-lf3-240
+cfg-5700x-rx7600,Ryzen 7 5700X + RX 7600,1350,1700,cpu-5700x|gpu-rx7600|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-ax120
+cfg-5700x-rtx3060-12g,Ryzen 7 5700X + RTX 3060 12 Go,1400,1800,cpu-5700x|gpu-rtx3060-12g|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-ax120
+cfg-5700x-rtx5060,Ryzen 7 5700X + RTX 5060,1450,1850,cpu-5700x|gpu-rtx5060|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-ax120
+cfg-5700x-rx9060xt,Ryzen 7 5700X + RX 9060 XT,1400,1800,cpu-5700x|gpu-rx9060xt|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-ax120
+cfg-5700x-rtx5060ti-16g,Ryzen 7 5700X + RTX 5060 Ti 16 Go,1800,2300,cpu-5700x|gpu-rtx5060ti-16g|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-750|case-atx|cooler-ax120
+cfg-5800x-rx7600,Ryzen 7 5800X + RX 7600,1450,1900,cpu-5800x|gpu-rx7600|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-pa120
+cfg-5800x-rtx3060-12g,Ryzen 7 5800X + RTX 3060 12 Go,1500,1950,cpu-5800x|gpu-rtx3060-12g|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-pa120
+cfg-5800x-rtx5060,Ryzen 7 5800X + RTX 5060,1550,2000,cpu-5800x|gpu-rtx5060|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-pa120
+cfg-5800x-rx9060xt,Ryzen 7 5800X + RX 9060 XT,1550,2000,cpu-5800x|gpu-rx9060xt|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-650|case-atx|cooler-pa120
+cfg-5800x-rtx5060ti-16g,Ryzen 7 5800X + RTX 5060 Ti 16 Go,1950,2450,cpu-5800x|gpu-rtx5060ti-16g|mb-b550-asus/mb-b550-gigabyte|ram-32-3200|ssd-sata-250|hdd-1to~hdd-2to|psu-750|case-atx|cooler-pa120
