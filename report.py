@@ -9,6 +9,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 ALERT_DROP = 0.07   # baisse >= 7 % vs médiane des 7 derniers jours => pointer vers Amazon
 GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
+SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
 
 
@@ -74,6 +75,9 @@ def stats(pts):
 
 
 # --- graphiques SVG ---------------------------------------------------------------------------------------
+_gid = [0]
+
+
 def chart(lines, w=560, h=190):
     """lines : [(libellé, [(datetime, prix)], classe)]"""
     allp = [p for _, pts, _ in lines for p in pts]
@@ -87,7 +91,10 @@ def chart(lines, w=560, h=190):
     t0, t1 = min(d for d, _ in allp).timestamp(), max(d for d, _ in allp).timestamp()
     X = lambda d: px + ((w - px - 10) * (d.timestamp() - t0) / (t1 - t0) if t1 > t0 else (w - px - 10) / 2)
     Y = lambda v: py0 + (h - py0 - py1) * (1 - (v - lo) / (hi - lo))
-    out = []
+    _gid[0] += 1
+    gid = f"g{_gid[0]}"
+    out = [f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--acc);stop-opacity:.22"/>'
+           f'<stop offset="1" style="stop-color:var(--acc);stop-opacity:0"/></linearGradient></defs>']
     for k in range(3):
         v = lo + (hi - lo) * k / 2
         out.append(f'<line class="grid" x1="{px}" x2="{w-10}" y1="{Y(v):.1f}" y2="{Y(v):.1f}"/>'
@@ -96,12 +103,13 @@ def chart(lines, w=560, h=190):
         if not pts:
             continue
         d = " ".join(f"{X(a):.1f},{Y(b):.1f}" for a, b in pts)
-        if i == 0 and len(pts) > 1:
-            out.append(f'<polyline class="area" points="{X(pts[0][0]):.1f},{h-py1} {d} {X(pts[-1][0]):.1f},{h-py1}"/>')
+        if i == 0 and cls == "line" and len(pts) > 1:
+            out.append(f'<polyline class="area" fill="url(#{gid})" points="{X(pts[0][0]):.1f},{h-py1} {d} {X(pts[-1][0]):.1f},{h-py1}"/>')
         if len(pts) > 1:
             out.append(f'<polyline class="{cls}" points="{d}"/>')
         r = 3.2 if len(pts) < 60 else 1.6
-        out.append("".join(f'<circle class="dot {cls}" cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{r}"><title>{esc(label)} · {a:%d/%m %H:%M} · {fmt(b)}</title></circle>' for a, b in pts))
+        dcls = " ".join(t for t in cls.split() if t != "line")
+        out.append("".join(f'<circle class="dot {dcls}" cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{r}"><title>{esc(label)} · {a:%d/%m %H:%M} · {fmt(b)}</title></circle>' for a, b in pts))
     d0, d1 = min(d for d, _ in allp), max(d for d, _ in allp)
     out.append(f'<text class="ax" x="{px}" y="{h-9}">{d0:%d/%m/%y %Hh}</text><text class="ax" x="{w-10}" y="{h-9}" text-anchor="end">{d1:%d/%m/%y %Hh}</text>')
     return f'<svg viewBox="0 0 {w} {h}" role="img" aria-label="Évolution du prix">{"".join(out)}</svg>'
@@ -205,10 +213,10 @@ for cat in cat_names:
             ref = float(last_best[pid]["prix_eur"]) if pid in last_best else None
             diff = "" if ref is None else (f"+{float(r['prix_eur'])-ref:.2f} €".replace(".", ",") if float(r["prix_eur"]) > ref else "meilleur")
             stale = "" if r["horodatage"] == max(x["horodatage"] for x in prices if x["produit_id"] == pid) else " · ancien relevé"
-            tbl += (f'<tr><td>{shoplabel(r)}{stale}</td><td><a href="{esc(r["url"])}" target="_blank" rel="noopener">{esc(r["titre"][:80])}</a></td>'
+            tbl += (f'<tr><td class="nw"><span class="sd {SHOP_CLS.get(sh, "s1")}"></span>{shoplabel(r)}{stale}</td><td><a href="{esc(r["url"])}" target="_blank" rel="noopener">{esc(r["titre"][:80])}</a></td>'
                     f'<td class="num"><b>{fmt(float(r["prix_eur"]))}</b></td><td class="num muted">{diff}</td></tr>')
-        shop_lines = [(sh, shop_rows[(pid, sh)], f"line s{i+1}") for i, sh in enumerate(shops)]
-        legend = "".join(f'<span class="lg s{i+1}">{esc(sh)}</span>' for i, sh in enumerate(shops))
+        shop_lines = [(sh, shop_rows[(pid, sh)], f"line {SHOP_CLS.get(sh, 's1')}") for sh in shops]
+        legend = "".join(f'<span class="lg {SHOP_CLS.get(sh, "s1")}"><i></i>{esc(sh)}</span>' for sh in shops)
         panels += f'''<article class="pp card" data-pid="{pid}" data-cat="{slug(cat)}"><header><h3>{esc(products[pid]["libelle"])}</h3>
           <div class="tags"><span class="tag">{esc(products[pid]["gamme"])}</span><span class="tag soft">{esc(cat)}</span>{badge(s)}</div></header>
           {statline(s)}<h4>Meilleur prix</h4>{chart(lines)}
@@ -219,38 +227,62 @@ alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense 
              + "<br>".join(esc(a) for a in alerts) + "</div>") if alerts else ""
 warn_box = f'<div class="notice warn">{"<br>".join(esc(w) for w in warn)}</div>' if warn else ""
 last_txt = f"{datetime.fromisoformat(last_ts):%d/%m/%Y à %H:%M}" if last_ts else "aucun relevé"
-gen_txt = datetime.now(ZoneInfo("Europe/Paris")).strftime("%d/%m/%Y à %H:%M")
+_now = datetime.now(ZoneInfo("Europe/Paris"))
+gen_txt = _now.strftime("%d/%m/%Y à %H:%M")
+gen_short = _now.strftime("%d/%m %H:%M")
+last_short = f"{datetime.fromisoformat(last_ts):%d/%m · %H:%M}" if last_ts else "—"
+age_txt = (f"il y a {int(age.total_seconds() // 3600)} h {int(age.total_seconds() % 3600 // 60):02d}" if age else "aucun relevé")
+shops_ok = sum(1 for _, st in health if st == "ok")
+shops_bad = shops_ok != len(health)
+n_cfg = len(configs)
 
 CSS = """
-:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2a37;--mut:#6b7785;--acc:#4a6785;--soft:#a9bccd;--line:#e5e9ee;--alert:#b4553a}
-@media(prefers-color-scheme:dark){:root{--bg:#12171d;--card:#1a2129;--ink:#e6ebf0;--mut:#8b97a4;--acc:#8fb0d0;--soft:#4a6785;--line:#27303a;--alert:#e08a6d}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:1100px;margin:0 auto;padding:40px 16px 64px}a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
-h1{font-size:26px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}h3{font-size:17px;font-weight:600;margin:0}h4{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:18px 0 4px}
-h3.grp{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--mut);margin:34px 0 12px}.muted{color:var(--mut)}small{display:block;color:var(--mut);font-size:12px}
-.cfgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(500px,1fr));gap:16px;align-items:start}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
-header{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}.tags{display:flex;flex-wrap:wrap;gap:6px}
-.tag{font-size:11.5px;padding:2px 9px;border-radius:99px;border:1px solid var(--soft);color:var(--acc)}.tag.soft{border-color:var(--line);color:var(--mut)}.tag.off{border-style:dashed}.tag.alert{border-color:var(--alert);color:var(--alert)}
-.stats{display:flex;flex-wrap:wrap;gap:6px 22px;margin-bottom:6px}.stats span{display:block;font-size:11px;color:var(--mut)}.stats b{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
-svg{width:100%;height:auto;display:block}.line{fill:none;stroke:var(--acc);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}.area{fill:var(--soft);opacity:.18;stroke:none}
-.dot{fill:var(--acc);stroke:none}line.grid{stroke:var(--line)}.ax{fill:var(--mut);font-size:13px}
-.line.s1,.dot.s1{stroke:var(--acc);fill:var(--acc)}.line.s2,.dot.s2{stroke:var(--soft);fill:var(--soft)}.line.s3,.dot.s3{stroke:var(--mut);fill:var(--mut);stroke-dasharray:5 4}.dot.s3{stroke:none}.line.s1,.line.s2,.line.s3{fill:none}
-.legend{display:flex;gap:16px;font-size:12.5px;color:var(--mut);margin-bottom:2px}.lg::before{content:"";display:inline-block;width:14px;height:2px;margin-right:6px;vertical-align:middle;background:var(--acc)}.lg.s2::before{background:var(--soft)}.lg.s3::before{background:var(--mut)}
-details{margin:8px 0 6px;font-size:13.5px}summary{cursor:pointer;color:var(--acc);padding:6px 0}.tw{overflow-x:auto}
-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px}th{font-size:11px;font-weight:600;color:var(--mut);text-align:left;text-transform:uppercase;letter-spacing:.05em;padding:4px}td{padding:7px 4px;border-top:1px solid var(--line);vertical-align:middle}
-.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}th.num{text-align:right}tr.tot td{border-top:2px solid var(--line)}.spark{width:64px;height:22px}td.nw{white-space:nowrap}.pl{flex-wrap:wrap;gap:6px}.cfgs>*{min-width:0}
-.notice{border:1px solid var(--line);border-left:3px solid var(--acc);background:var(--card);border-radius:10px;padding:12px 16px;margin:18px 0;font-size:14px}.notice.alert{border-left-color:var(--alert)}.notice.warn{border-left-color:var(--mut)}
-nav.top{display:flex;gap:6px;margin:26px 0 0;border-bottom:1px solid var(--line)}
-nav.top button{font:inherit;font-size:15px;font-weight:600;background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);padding:10px 18px;cursor:pointer;transition:color .2s,border-color .2s}
-nav.top button:hover{color:var(--ink)}nav.top button[aria-selected=true]{color:var(--acc);border-bottom-color:var(--acc)}
-.pills{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 0}.pills.sub{margin-top:10px}
-.pills button{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:5px 14px;cursor:pointer;transition:all .2s}
-.pills button:hover{border-color:var(--soft);color:var(--ink)}.pills button[aria-selected=true]{background:var(--acc);border-color:var(--acc);color:var(--card)}
-.pp{margin-top:22px;max-width:760px}
-.js .view,.js .pl,.js .pp{display:none}.js .view.on,.js .pl.on,.js .pp.on{display:block}.js .pl.on{display:flex}
+:root{--bg:#f3f5f8;--bg2:#e6edf6;--card:#fff;--card2:#f9fafc;--chip:#f0f3f7;--ink:#1b2634;--mut:#66758a;--acc:#35597f;--soft:#a9bccd;--line:#e3e8ee;--alert:#b4553a;--ok:#2f9e6e;
+--s1:#1f3f66;--s2:#14917f;--s3:#d9822b;--sh:0 1px 2px rgba(18,32,52,.06),0 10px 28px -14px rgba(18,32,52,.28);--sh2:0 2px 4px rgba(18,32,52,.08),0 20px 40px -16px rgba(18,32,52,.38)}
+@media(prefers-color-scheme:dark){:root{--bg:#0f141a;--bg2:#16202b;--card:#18202a;--card2:#151c25;--chip:#1f2833;--ink:#e7edf3;--mut:#8d9aab;--acc:#8fb4da;--soft:#3f5f80;--line:#27313d;--alert:#e08a6d;--ok:#4cc38a;
+--s1:#8db3ee;--s2:#4fd1bf;--s3:#f2a95c;--sh:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);--sh2:0 2px 4px rgba(0,0,0,.5),0 20px 40px -16px rgba(0,0,0,.8)}}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(1200px 460px at 50% -140px,var(--bg2),transparent) no-repeat,var(--bg)}
+main{max-width:1100px;margin:0 auto;padding:36px 16px 64px}a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+.hero{position:relative;overflow:hidden;display:flex;flex-wrap:wrap;gap:22px 32px;align-items:center;justify-content:space-between;padding:26px 30px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(135deg,var(--card) 0%,var(--card2) 55%,var(--bg2) 100%);box-shadow:var(--sh)}
+.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(var(--s1),var(--s2))}
+.brand{display:flex;gap:18px;align-items:center}.logo{flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,var(--s1),var(--acc));box-shadow:0 10px 22px -10px var(--s1)}
+.logo svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+h1{font-size:28px;font-weight:650;letter-spacing:-.02em;line-height:1.15;margin:0}.sub{margin:4px 0 0;color:var(--mut);font-size:14px}
+.kpis{display:flex;flex-wrap:wrap;gap:10px}.kpi{min-width:120px;padding:11px 15px;border-radius:14px;background:var(--chip);border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.kpi span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}.kpi b{display:block;font-size:17px;font-variant-numeric:tabular-nums;margin-top:1px}.kpi small{font-size:12px}
+.dotst{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:7px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}.dotst.bad{background:var(--alert);box-shadow:0 0 0 3px color-mix(in srgb,var(--alert) 25%,transparent)}
+h3{font-size:17px;font-weight:600;margin:0}h4{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:20px 0 4px}
+h3.grp{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--mut);margin:38px 0 14px}
+h3.grp::before{content:"";width:22px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--s1),var(--s2))}.muted{color:var(--mut)}small{display:block;color:var(--mut);font-size:12px}
+.cfgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(500px,1fr));gap:18px;align-items:start}.cfgs>*{min-width:0}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:20px 20px 14px;box-shadow:var(--sh);transition:transform .25s,box-shadow .25s,border-color .25s}
+.cfgs .card:hover{transform:translateY(-3px);box-shadow:var(--sh2);border-color:var(--soft)}
+.card header{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11.5px;padding:2px 10px;border-radius:99px;border:1px solid var(--soft);color:var(--acc);background:color-mix(in srgb,var(--soft) 12%,transparent)}.tag.soft{border-color:var(--line);color:var(--mut);background:none}.tag.off{border-style:dashed}.tag.alert{border-color:var(--alert);color:var(--alert);background:color-mix(in srgb,var(--alert) 10%,transparent)}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}.stats>div{padding:6px 12px;border-radius:11px;background:var(--chip);border:1px solid var(--line)}
+.stats span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}.stats b{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
+svg{width:100%;height:auto;display:block}.line{fill:none;stroke:var(--acc);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}.area{stroke:none}
+.dot{fill:var(--acc);stroke:var(--card);stroke-width:1.5}line.grid{stroke:var(--line);stroke-dasharray:2 5}.ax{fill:var(--mut);font-size:13px}
+.line.s1{stroke:var(--s1)}.line.s2{stroke:var(--s2);stroke-dasharray:9 5}.line.s3{stroke:var(--s3);stroke-dasharray:.1 6.5;stroke-width:3.4}
+.dot.s1{fill:var(--s1)}.dot.s2{fill:var(--s2)}.dot.s3{fill:var(--s3)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}.lg{display:inline-flex;align-items:center;gap:9px;padding:4px 13px 4px 11px;border-radius:99px;background:var(--chip);border:1px solid var(--line);font-size:13px;font-weight:500}
+.lg i{display:block;width:24px;height:0;border-top:3.5px solid var(--s1);border-radius:3px}.lg.s2 i{border-top:3.5px dashed var(--s2)}.lg.s3 i{border-top:3.5px dotted var(--s3)}
+.sd{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:var(--s1)}.sd.s2{background:var(--s2)}.sd.s3{background:var(--s3)}
+details{margin:10px 0 6px;font-size:13.5px}summary{cursor:pointer;color:var(--acc);font-weight:500;padding:8px 2px}summary:hover{text-decoration:underline}.tw{overflow-x:auto;border-radius:12px}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px}th{font-size:11px;font-weight:600;color:var(--mut);text-align:left;text-transform:uppercase;letter-spacing:.05em;padding:6px 6px}td{padding:8px 6px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:hover td,table tr:hover td{background:color-mix(in srgb,var(--soft) 9%,transparent)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}th.num{text-align:right}tr.tot td{border-top:2px solid var(--line);font-size:14.5px}.spark{width:64px;height:22px}td.nw{white-space:nowrap}
+.notice{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--card);border-radius:12px;padding:13px 18px;margin:18px 0;font-size:14px;box-shadow:var(--sh)}.notice.alert{border-left-color:var(--alert)}.notice.warn{border-left-color:var(--mut)}
+nav.top{display:inline-flex;gap:4px;padding:5px;margin:26px 0 0;border-radius:15px;background:var(--chip);border:1px solid var(--line);box-shadow:inset 0 1px 3px rgba(0,0,0,.06)}
+nav.top button{font:inherit;font-size:14.5px;font-weight:600;background:none;border:0;border-radius:11px;color:var(--mut);padding:9px 22px;cursor:pointer;transition:all .22s}
+nav.top button:hover{color:var(--ink)}nav.top button[aria-selected=true]{background:var(--card);color:var(--acc);box-shadow:var(--sh)}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 0}.pills.sub{margin-top:10px}
+.pills button{font:inherit;font-size:13px;background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:6px 15px;cursor:pointer;box-shadow:0 1px 2px rgba(18,32,52,.05);transition:all .2s}
+.pills button:hover{border-color:var(--soft);color:var(--ink);transform:translateY(-1px)}.pills button[aria-selected=true]{background:linear-gradient(135deg,var(--acc),var(--s1));border-color:transparent;color:var(--card);box-shadow:0 6px 14px -6px var(--s1)}
+.pp{margin-top:24px;max-width:780px}
+.js .view,.js .pl,.js .pp{display:none}.js .view.on,.js .pl.on,.js .pp.on{display:block}.js .pl.on{display:flex}.pl{flex-wrap:wrap;gap:7px}
 footer{margin-top:56px;font-size:12.5px;color:var(--mut);max-width:780px}
-@media(max-width:560px){.cfgs{grid-template-columns:1fr}main{padding-top:24px}nav.top button{padding:10px 12px}}
+@media(max-width:560px){.cfgs{grid-template-columns:1fr}main{padding-top:20px}.hero{padding:20px}h1{font-size:23px}.kpi{min-width:calc(50% - 5px);flex:1}nav.top button{padding:9px 14px}}
 """
 JS = """
 (function(){
@@ -260,7 +292,7 @@ JS = """
  var cats=$('.pills.cats button'),pls=$('.pl'),pps=$('.pp'),state={v:'configurations',c:null,p:null};
  function sel(btns,key,val){btns.forEach(function(b){b.setAttribute('aria-selected',b.dataset[key]===val)})}
  function render(){
-  views.forEach(function(v){v.classList.toggle('on',v.id===state.v)});sel($('button',top),'v',state.v);
+  views.forEach(function(v){v.classList.toggle('on',v.id==='v-'+state.v)});sel($('button',top),'v',state.v);
   if(state.v==='composants'){
    if(!cats.some(function(b){return b.dataset.cat===state.c}))state.c=cats[0].dataset.cat;
    var pl=pls.filter(function(x){return x.dataset.cat===state.c})[0];
@@ -279,12 +311,15 @@ JS = """
 """
 page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Suivi prix hardware AM4</title><style>{CSS}</style></head><body><main>
-<h1>Suivi prix hardware · AM4 / DDR4</h1>
-<p class="muted">Dernier relevé : {last_txt} · {len(stamps)} relevé(s) · LDLC, Materiel.net, Rue du Commerce · rapport généré le {gen_txt}</p>
+<div class="hero"><div class="brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 8-9"/><path d="M15 5h5v5"/></svg></div>
+<div><h1>Suivi prix hardware</h1><p class="sub">PC AM4 · DDR4 · LDLC, Materiel.net, Rue du Commerce</p></div></div>
+<div class="kpis"><div class="kpi"><span>Dernier relevé</span><b>{last_short}</b><small class="muted">{age_txt}</small></div>
+<div class="kpi"><span>Relevés</span><b>{len(stamps)}</b><small class="muted">{n_cfg} configs · {len(products)} composants</small></div>
+<div class="kpi"><span>Boutiques</span><b><i class="dotst{" bad" if shops_bad else ""}"></i>{shops_ok}/{len(health)} ok</b><small class="muted">généré {gen_short}</small></div></div></div>
 {alert_box}{warn_box}
 <nav class="top" role="tablist"><button type="button" role="tab" data-v="configurations">Configurations</button><button type="button" role="tab" data-v="composants">Composants</button></nav>
-<section class="view" id="configurations">{cfg_html}</section>
-<section class="view" id="composants"><div class="pills cats">{cat_btns}</div><div class="pills sub">{plists}</div>{panels}</section>
+<section class="view" id="v-configurations">{cfg_html}</section>
+<section class="view" id="v-composants"><div class="pills cats">{cat_btns}</div><div class="pills sub">{plists}</div>{panels}</section>
 <footer><p>Chaque courbe suit le meilleur prix trouvé parmi les boutiques suivies (offres en stock et vendues par la boutique en priorité ; une offre marketplace n’est retenue que si aucune offre directe n’existe, et elle est alors signalée). Le total d’une configuration est la somme des meilleurs prix de ses composants, boutiques mélangées, livraison non incluse. Stockage de toutes les configurations : SSD SATA 250 Go + disque dur 3,5" 7200 tr/min. Cartes mères : B550 ASUS ou Gigabyte uniquement. Seule la première page de résultats de chaque boutique est lue : pour les catégories génériques, « le moins cher » est celui de cette page, pas forcément du catalogue. Amazon n’est pas suivi : une baisse d’au moins {int(ALERT_DROP*100)} % par rapport à la médiane des 7 derniers jours déclenche un rappel d’aller y regarder.</p></footer>
 </main><script>{JS}</script></body></html>'''
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
