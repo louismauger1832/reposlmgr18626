@@ -145,6 +145,7 @@ for c in configs:
         pass
 
 comp_html = []
+slug = lambda t: ''.join(ch if ch.isalnum() else '-' for ch in t.lower().replace('é','e').replace('è','e').replace('î','i'))
 cats = defaultdict(list)
 for pid, p in products.items():
     cats[p["categorie"]].append(pid)
@@ -162,7 +163,7 @@ for cat, pids in cats.items():
         cards += (f'<article class="card small"><header><h4>{esc(products[pid]["libelle"])}</h4>'
                   f'<div class="tags"><span class="tag">{esc(products[pid]["gamme"])}</span>'
                   f'<span class="tag soft">{shop}</span>{badge(s)}</div></header>{statline(s)}{chart(series[pid], h=140)}</article>')
-    comp_html.append(f'<section><h2>{esc(cat)}</h2><div class="grid">{cards}</div></section>')
+    comp_html.append(f'<section class="tab" id="t-{slug(cat)}" data-label="{esc(cat)}"><h2>{esc(cat)}</h2><div class="grid">{cards}</div></section>')
 
 alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense à regarder les prix sur Amazon.</b><br>'
              + "<br>".join(esc(a) for a in alerts) + "</div>") if alerts else ""
@@ -189,15 +190,34 @@ svg{{width:100%;height:auto;display:block}}.line{{fill:none;stroke:var(--acc);st
 .dot{{fill:var(--acc)}}.grid line,line.grid{{stroke:var(--line)}}.ax{{fill:var(--mut);font-size:10.5px}}
 details{{margin:6px 0 8px;font-size:13px}}summary{{cursor:pointer;color:var(--mut);padding:4px 0}}table{{width:100%;border-collapse:collapse;margin-top:6px}}td{{padding:5px 4px;border-top:1px solid var(--line)}}.num{{text-align:right;font-variant-numeric:tabular-nums}}
 .notice{{border:1px solid var(--line);border-left:3px solid var(--acc);background:var(--card);border-radius:10px;padding:12px 16px;margin:18px 0;font-size:14px}}.notice.alert{{border-left-color:var(--alert)}}.notice.warn{{border-left-color:var(--mut)}}
+nav.tabs{{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:28px 0 0;scrollbar-width:none}}nav.tabs::-webkit-scrollbar{{display:none}}
+nav.tabs button{{flex:none;font:inherit;font-size:14px;background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);padding:10px 14px;cursor:pointer;transition:color .2s,border-color .2s}}
+nav.tabs button:hover{{color:var(--ink)}}nav.tabs button[aria-selected=true]{{color:var(--acc);border-bottom-color:var(--acc)}}
+.js .tab{{display:none}}.js .tab.on{{display:block}}.tab>h2:first-child{{margin-top:28px}}
 footer{{margin-top:56px;font-size:12.5px;color:var(--mut);max-width:760px}}@media(max-width:560px){{.cfgs{{grid-template-columns:1fr}}main{{padding-top:24px}}}}
 </style></head><body><main>
 <h1>Suivi prix hardware · AM4 / DDR4</h1>
 <p class="muted">Dernier relevé : {last_txt} · {len(stamps)} relevé(s) · LDLC, Materiel.net, Rue du Commerce · rapport généré le {gen_txt}</p>
 {alert_box}{warn_box}
-<section><h2>Configurations</h2><div class="cfgs">{"".join(cfg_html)}</div></section>
+<nav class="tabs" role="tablist" aria-label="Sections"></nav>
+<section class="tab" id="t-configurations" data-label="Configurations"><h2>Configurations</h2><div class="cfgs">{"".join(cfg_html)}</div></section>
 {"".join(comp_html)}
 <footer><p>Chaque courbe suit le meilleur prix trouvé parmi les boutiques suivies (offres en stock et vendues par la boutique en priorité ; une offre marketplace n’est retenue que si aucune offre directe n’existe, et elle est alors signalée). Le total d’une configuration est la somme des meilleurs prix de ses composants, boutiques mélangées, livraison non incluse. Seule la première page de résultats de chaque boutique est lue : pour les catégories génériques (carte mère, alimentation, boîtier), « le moins cher » est celui de cette page, pas forcément du catalogue. Amazon n’est pas suivi : une baisse d’au moins {int(ALERT_DROP*100)} % par rapport à la médiane des 7 derniers jours déclenche un rappel d’aller y regarder.</p></footer>
-</main></body></html>'''
+</main>
+<script>
+(function(){{
+ var secs=[].slice.call(document.querySelectorAll('section.tab')),nav=document.querySelector('nav.tabs');
+ if(!secs.length||!nav)return; document.documentElement.classList.add('js');
+ function show(id){{ if(!secs.some(function(s){{return s.id===id}}))id=secs[0].id;
+  secs.forEach(function(s){{s.classList.toggle('on',s.id===id)}});
+  [].forEach.call(nav.children,function(b){{b.setAttribute('aria-selected',b.dataset.id===id)}});
+  try{{history.replaceState(null,'','#'+id)}}catch(e){{}} }}
+ secs.forEach(function(s){{var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');
+  b.dataset.id=s.id;b.textContent=s.dataset.label;b.onclick=function(){{show(s.id)}};nav.appendChild(b)}});
+ show(location.hash.slice(1)||secs[0].id);
+ window.addEventListener('hashchange',function(){{show(location.hash.slice(1))}});
+}})();
+</script></body></html>'''
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 open(os.path.join(ROOT, "docs", "index.html"), "w", encoding="utf-8").write(page)
 print("rapport généré :", len(page) // 1024, "Ko")
