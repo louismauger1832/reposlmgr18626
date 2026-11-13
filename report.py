@@ -168,6 +168,8 @@ alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense 
              + "<br>".join(esc(a) for a in alerts) + "</div>") if alerts else ""
 warn_box = f'<div class="notice warn">{"<br>".join(esc(w) for w in warn)}</div>' if warn else ""
 last_txt = f"{datetime.fromisoformat(last_ts):%d/%m/%Y à %H:%M}" if last_ts else "aucun relevé"
+from zoneinfo import ZoneInfo
+gen_txt = datetime.now(ZoneInfo("Europe/Paris")).strftime("%d/%m/%Y à %H:%M")
 
 page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Suivi prix hardware AM4</title>
@@ -190,7 +192,7 @@ details{{margin:6px 0 8px;font-size:13px}}summary{{cursor:pointer;color:var(--mu
 footer{{margin-top:56px;font-size:12.5px;color:var(--mut);max-width:760px}}@media(max-width:560px){{.cfgs{{grid-template-columns:1fr}}main{{padding-top:24px}}}}
 </style></head><body><main>
 <h1>Suivi prix hardware · AM4 / DDR4</h1>
-<p class="muted">Dernier relevé : {last_txt} · {len(stamps)} relevé(s) · LDLC, Materiel.net, Rue du Commerce</p>
+<p class="muted">Dernier relevé : {last_txt} · {len(stamps)} relevé(s) · LDLC, Materiel.net, Rue du Commerce · rapport généré le {gen_txt}</p>
 {alert_box}{warn_box}
 <section><h2>Configurations</h2><div class="cfgs">{"".join(cfg_html)}</div></section>
 {"".join(comp_html)}
