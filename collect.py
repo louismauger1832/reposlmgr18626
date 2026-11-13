@@ -67,7 +67,7 @@ SHOPS = {
 def main():
     tz = ZoneInfo("Europe/Paris")
     now = datetime.now(tz)
-    slot = sys.argv[1] if len(sys.argv) > 1 else ("matin" if now.hour < 12 else "soir")
+    slot = sys.argv[1] if len(sys.argv) > 1 else f"{now.hour:02d}h"
     ts = now.isoformat(timespec="seconds")
     products = list(csv.DictReader(open(os.path.join(ROOT, "config", "products.csv"), encoding="utf-8")))
     os.makedirs(os.path.join(ROOT, "data"), exist_ok=True)

@@ -1,6 +1,6 @@
 # Suivi prix hardware (AM4 / DDR4)
 
-Relevés automatiques LDLC, Materiel.net et Rue du Commerce, 2 fois par jour (6h00 et 18h00, Europe/Paris). Amazon n'est pas suivi (voir le rappel dans le rapport).
+Relevés automatiques LDLC, Materiel.net et Rue du Commerce, toutes les 3 heures (Europe/Paris). Amazon n'est pas suivi (voir le rappel dans le rapport).
 
 - `config/products.csv` : composants suivis (gamme bas/milieu/haut, requête, filtres regex)
 - `config/configs.csv` : configurations (budget, composants)

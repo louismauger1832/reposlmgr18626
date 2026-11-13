@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ALERT_DROP = 0.07   # baisse >= 7 % vs médiane des 7 derniers jours => pointer vers Amazon
-GAP_HOURS = 13      # relevés toutes les 12 h : au-delà, on signale un trou
+GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 
 
 def rd(path):
