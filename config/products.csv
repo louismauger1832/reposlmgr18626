@@ -1,23 +1,17 @@
 id,categorie,gamme,libelle,requete,inclure,exclure
-cpu-5600,CPU,bas,Ryzen 5 5600,ryzen 5 5600,Ryzen.*5600(?![\dA-Za-z]),\b(PC|Gamer|portable|ordinateur)\b
-cpu-5700x,CPU,milieu,Ryzen 7 5700X,ryzen 7 5700x,Ryzen.*5700X(?![\dA-Za-z]),\b(PC|Gamer|portable|ordinateur)\b
-cpu-5800x3d,CPU,haut,Ryzen 7 5800X3D,ryzen 7 5800x3d,Ryzen.*5800X3D,\b(PC|Gamer|portable|ordinateur)\b
-cpu-5900xt,CPU Ryzen 9,milieu,Ryzen 9 5900XT,ryzen 9 5900xt,Ryzen.*5900XT,\b(PC|Gamer|portable|ordinateur)\b
-cpu-5950x,CPU Ryzen 9,haut,Ryzen 9 5950X,ryzen 9 5950x,Ryzen.*5950X,\b(PC|Gamer|portable|ordinateur)\b
+cpu-5600,CPU,bas,Ryzen 5 5600,ryzen 5 5600,Ryzen.*5600(?![\dA-Za-z]),\b(PC|Gamer|portable|ordinateur)\b|\+|\bKit\b|Bundle
+cpu-5700x,CPU,milieu,Ryzen 7 5700X,ryzen 7 5700x,Ryzen.*5700X(?![\dA-Za-z]),\b(PC|Gamer|portable|ordinateur)\b|\+|\bKit\b|Bundle
+cpu-5800x3d,CPU,haut,Ryzen 7 5800X3D,ryzen 7 5800x3d,Ryzen.*5800X3D,\b(PC|Gamer|portable|ordinateur)\b|\+|\bKit\b|Bundle
+cpu-5900xt,CPU,milieu,Ryzen 9 5900XT,ryzen 9 5900xt,Ryzen.*5900XT,\b(PC|Gamer|portable|ordinateur)\b|\+|\bKit\b|Bundle
+cpu-5950x,CPU,haut,Ryzen 9 5950X,ryzen 9 5950x,Ryzen.*5950X,\b(PC|Gamer|portable|ordinateur)\b|\+|\bKit\b|Bundle
 gpu-rx7600,GPU,bas,Radeon RX 7600,rx 7600,RX 7600(?! ?XT),\b(PC|Gamer|portable|ordinateur)\b
 gpu-rtx3060-12g,GPU,bas,GeForce RTX 3060 12 Go,rtx 3060 12go,RTX 3060(?! ?Ti),\b8 ?(Go|GB)|\bPC\b|Gamer|portable|ordinateur
 gpu-rtx5060,GPU,milieu,GeForce RTX 5060,rtx 5060,RTX 5060(?! ?Ti),\b(PC|Gamer|portable|ordinateur)\b
 gpu-rx9060xt,GPU,milieu,Radeon RX 9060 XT,rx 9060 xt,RX 9060 ?XT,\b(PC|Gamer|portable|ordinateur)\b
 gpu-rtx5060ti-16g,GPU,haut,GeForce RTX 5060 Ti 16 Go,rtx 5060 ti 16go,RTX 5060 ?Ti.*16 ?(Go|GB)|16 ?(Go|GB).*RTX 5060 ?Ti,\b(PC|Gamer|portable|ordinateur)\b
-mb-a520,Carte mère,bas,Carte mère AM4 A520,carte mere a520,A520,AM5|\b(PC|Gamer|portable|ordinateur)\b
-mb-b550,Carte mère,milieu,Carte mère AM4 B550,carte mere b550,B550,AM5|\b(PC|Gamer|portable|ordinateur)\b
-mb-x570,Carte mère,haut,Carte mère AM4 X570,carte mere x570,X570,AM5|\b(PC|Gamer|portable|ordinateur)\b
 ram-16-3200,RAM,bas,DDR4 16 Go 3200,ddr4 16 go 3200,(?=.*DDR4)(?=.*\b16 ?(Go|GB))(?=.*3200),SO-?DIMM|portable|ECC|DDR5|3600|32 ?(Go|GB)
 ram-32-3200,RAM,milieu,DDR4 32 Go (2x16) 3200,ddr4 32 go 3200,(?=.*DDR4)(?=.*32 ?(Go|GB))(?=.*3200),SO-?DIMM|portable|ECC|DDR5|3600|3733|4000|16 ?(Go|GB)\)?\s*-?\s*DDR4 3200 MHz - CL\d+ -? ?$
 ram-32-3600,RAM,haut,DDR4 32 Go (2x16) 3600,ddr4 32 go 3600,(?=.*DDR4)(?=.*32 ?(Go|GB))(?=.*3600),SO-?DIMM|portable|ECC|DDR5
-ssd-500,SSD,bas,SSD NVMe 500 Go,ssd nvme 500 go,(500 ?Go|512 ?Go).*(NVMe|M\.2)|(NVMe|M\.2).*(500 ?Go|512 ?Go),externe|portable|Gen ?5|PS5|Heatsink
-ssd-1to,SSD,milieu,SSD NVMe 1 To,ssd nvme 1 to,(1 ?To|1000 ?Go).*(NVMe|M\.2)|(NVMe|M\.2).*(1 ?To|1000 ?Go),externe|portable|Gen ?5|PS5|Heatsink
-ssd-2to,SSD,haut,SSD NVMe 2 To,ssd nvme 2 to,(2 ?To|2000 ?Go).*(NVMe|M\.2)|(NVMe|M\.2).*(2 ?To|2000 ?Go),externe|portable|Gen ?5|PS5|Heatsink
 psu-550,Alimentation,bas,Alimentation 550 W,alimentation 550w,550 ?W,SFX|\bPC\b|Gamer
 psu-650,Alimentation,milieu,Alimentation 650 W,alimentation 650w,650 ?W,SFX|\bPC\b|Gamer
 psu-750,Alimentation,haut,Alimentation 750 W,alimentation 750w,750 ?W,SFX|\bPC\b|Gamer
@@ -26,3 +20,10 @@ case-fractal,Boîtier,haut,Boîtier Fractal Design,boitier fractal design,Fracta
 cooler-ax120,Refroidissement,bas,Thermalright Assassin X 120,thermalright assassin x 120,Assassin X 120,Kit|\bPC\b
 cooler-pa120,Refroidissement,milieu,Thermalright Peerless Assassin 120,thermalright peerless assassin 120,Peerless Assassin 120,\bPC\b
 cooler-lf3-240,Refroidissement,haut,Arctic Liquid Freezer III 240,arctic liquid freezer iii 240,Liquid Freezer III.*240|240.*Liquid Freezer III,\bPC\b
+cpu-5800x,CPU,milieu,Ryzen 7 5800X,ryzen 7 5800x,Ryzen.*5800X(?![\dA-Za-z]),\b(PC|Gamer|portable|ordinateur)\b|\+|\bKit\b|Bundle
+mb-b550,Carte mère,milieu,B550 ASUS ou Gigabyte (moins chère),carte mere b550,(?=.*B550)(?=.*(ASUS|Gigabyte)),\bMSI\b|AM5|\b(PC|Gamer|portable|ordinateur)\b
+mb-b550-asus,Carte mère,milieu,B550 ASUS,carte mere b550 asus,(?=.*B550)(?=.*ASUS),\bMSI\b|AM5|\b(PC|Gamer|portable|ordinateur)\b
+mb-b550-gigabyte,Carte mère,milieu,B550 Gigabyte,carte mere b550 gigabyte,(?=.*B550)(?=.*Gigabyte),\bMSI\b|AM5|\b(PC|Gamer|portable|ordinateur)\b
+ssd-sata-250,Stockage,base,SSD SATA 250 Go,ssd sata 250 go,(?=.*(2[45]\d ?(Go|GB)))(?=.*SATA),NVMe|M\.2|externe|portable|USB|Thunderbolt|mSATA
+hdd-1to-7200,Stockage,base,HDD 1 To 7200 tr/min,disque dur 1 to 7200,(?=.*(\b1 ?To|1000 ?Go))(?=.*7200),"SSD|SSHD|externe|portable|2[,.]5|Mobile|SkyHawk|Surveillance"
+hdd-2to-7200,Stockage,base,HDD 2 To 7200 tr/min,disque dur 2 to 7200,(?=.*(\b2 ?To|2000 ?Go))(?=.*7200),"SSD|SSHD|externe|portable|2[,.]5|Mobile|SkyHawk|Surveillance"
