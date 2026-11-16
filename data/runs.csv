@@ -230,3 +230,6 @@ horodatage,creneau,boutique,statut,nb_produits_page,nb_offres_valides,detail
 2026-11-16T23:36:35+01:00,23h,LDLC,ok,480,277,
 2026-11-16T23:36:35+01:00,23h,Materiel.net,ok,714,249,
 2026-11-16T23:36:35+01:00,23h,Rue du Commerce,ok,1130,586,
+2026-11-17T00:35:52+01:00,00h,LDLC,ok,480,277,
+2026-11-17T00:35:52+01:00,00h,Materiel.net,ok,714,249,
+2026-11-17T00:35:52+01:00,00h,Rue du Commerce,partiel,1118,561,gpu-rtx5060: IncompleteRead(129930 bytes read)
