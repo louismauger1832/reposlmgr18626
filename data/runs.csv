@@ -194,3 +194,6 @@ horodatage,creneau,boutique,statut,nb_produits_page,nb_offres_valides,detail
 2026-11-16T11:36:21+01:00,11h,LDLC,ok,483,277,
 2026-11-16T11:36:21+01:00,11h,Materiel.net,ok,717,249,
 2026-11-16T11:36:21+01:00,11h,Rue du Commerce,partiel,1115,538,psu-550: IncompleteRead(64394 bytes read)
+2026-11-16T12:36:12+01:00,12h,LDLC,ok,485,279,
+2026-11-16T12:36:12+01:00,12h,Materiel.net,ok,718,250,
+2026-11-16T12:36:12+01:00,12h,Rue du Commerce,ok,1159,585,
