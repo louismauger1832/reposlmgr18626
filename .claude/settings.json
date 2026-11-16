@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout main)",
+      "Bash(git pull --rebase origin main)",
+      "Bash(git push origin main)",
+      "Bash(git diff --numstat data/)",
+      "Bash(git add data/ docs/)",
+      "Bash(git commit -m:*)",
+      "Bash(pip install -r requirements.txt)",
+      "Bash(python3 collect.py)",
+      "Bash(python3 report.py)"
+    ]
+  }
+}
