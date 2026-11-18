@@ -11,6 +11,10 @@ GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
 SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
+# onglet Romain : un processeur et deux cartes graphiques envisagées ; un duo = processeur + carte graphique seuls
+ROMAIN_PIDS = ["cpu-5800x", "gpu-rtx5060", "gpu-rtx3060-12g"]
+ROMAIN_DUOS = [("Ryzen 7 5800X + RTX 5060", ["cpu-5800x", "gpu-rtx5060"]),
+               ("Ryzen 7 5800X + RTX 3060 12 Go", ["cpu-5800x", "gpu-rtx3060-12g"])]
 
 
 def rd(path):
@@ -44,16 +48,21 @@ for ts in stamps:
     for pid in products:
         if (ts, pid) in best:
             series[pid].append((datetime.fromisoformat(ts), float(best[(ts, pid)]["prix_eur"])))
-cfg_series = {}
-for c in configs:
-    comp, last, pts = c["composants"].split("|"), {}, []
+
+
+def sum_series(comp):
+    """Somme des meilleurs prix des composants, à chaque relevé où tous ont un prix connu."""
+    last, pts = {}, []
     for ts in stamps:
         for pid in comp:
             if (ts, pid) in best:
                 last[pid] = float(best[(ts, pid)]["prix_eur"])
         if all(p in last for p in comp):
             pts.append((datetime.fromisoformat(ts), sum(last[p] for p in comp)))
-    cfg_series[c["config_id"]] = pts
+    return pts
+
+
+cfg_series = {c["config_id"]: sum_series(c["composants"].split("|")) for c in configs}
 
 
 def stats(pts):
@@ -143,6 +152,36 @@ def shoplabel(r):
     return esc(r["boutique"]) + (" · marketplace" if r["marketplace"] == "1" else "") + (" · rupture" if r["en_stock"] == "0" else "")
 
 
+def product_card(pid, cat, cls, attrs=""):
+    s = stats(series[pid])
+    shops = sorted({sh for (p, sh) in latest_shop if p == pid})
+    lines = [("Meilleur prix", series[pid], "line")]
+    tbl = ""
+    for sh in shops:
+        r = latest_shop[(pid, sh)]
+        ref = float(last_best[pid]["prix_eur"]) if pid in last_best else None
+        diff = "" if ref is None else (f"+{float(r['prix_eur'])-ref:.2f} €".replace(".", ",") if float(r["prix_eur"]) > ref else "meilleur")
+        stale = "" if r["horodatage"] == max(x["horodatage"] for x in prices if x["produit_id"] == pid) else " · ancien relevé"
+        tbl += (f'<tr><td class="nw"><span class="sd {SHOP_CLS.get(sh, "s1")}"></span>{shoplabel(r)}{stale}</td><td><a href="{esc(r["url"])}" target="_blank" rel="noopener">{esc(r["titre"][:80])}</a></td>'
+                f'<td class="num"><b>{fmt(float(r["prix_eur"]))}</b></td><td class="num muted">{diff}</td></tr>')
+    shop_lines = [(sh, shop_rows[(pid, sh)], f"line {SHOP_CLS.get(sh, 's1')}") for sh in shops]
+    legend = "".join(f'<span class="lg {SHOP_CLS.get(sh, "s1")}"><i></i>{esc(sh)}</span>' for sh in shops)
+    return f'''<article class="{cls}"{attrs}><header><h3>{esc(products[pid]["libelle"])}</h3>
+      <div class="tags"><span class="tag">{esc(products[pid]["gamme"])}</span><span class="tag soft">{esc(cat)}</span>{badge(s)}</div></header>
+      {statline(s)}<h4>Meilleur prix</h4>{chart(lines)}
+      <h4>Par boutique</h4><div class="legend">{legend}</div>{chart(shop_lines, h=170)}
+      <div class="tw"><table><thead><tr><th>Boutique</th><th>Offre retenue</th><th class="num">Prix</th><th class="num">Écart</th></tr></thead>{tbl}</table></div></article>'''
+
+
+def comp_row(pid):
+    r = last_best[pid]
+    st = stats(series[pid])
+    return (f'<tr><td><a href="{esc(r["url"])}" target="_blank" rel="noopener" title="{esc(r["titre"])}">{esc(products[pid]["libelle"])}</a>'
+            f'<small>{esc(products[pid]["categorie"])}</small></td><td class="nw">{shoplabel(r)}</td>'
+            f'<td>{spark(series[pid])}</td><td class="num">{pct(st["d7"]) if st else "n/d"}</td>'
+            f'<td class="num"><b>{fmt(float(r["prix_eur"]))}</b></td></tr>')
+
+
 # --- santé ------------------------------------------------------------------------------------------------
 health, last_ts, age = [], None, None
 if runs:
@@ -175,12 +214,7 @@ for g in groups:
             if pid not in last_best:
                 missing.append(products[pid]["libelle"])
                 continue
-            r = last_best[pid]
-            st = stats(series[pid])
-            rows += (f'<tr><td><a href="{esc(r["url"])}" target="_blank" rel="noopener" title="{esc(r["titre"])}">{esc(products[pid]["libelle"])}</a>'
-                     f'<small>{esc(products[pid]["categorie"])}</small></td><td class="nw">{shoplabel(r)}</td>'
-                     f'<td>{spark(series[pid])}</td><td class="num">{pct(st["d7"]) if st else "n/d"}</td>'
-                     f'<td class="num"><b>{fmt(float(r["prix_eur"]))}</b></td></tr>')
+            rows += comp_row(pid)
         total = f'<tr class="tot"><td colspan="4">Total</td><td class="num"><b>{fmt(s["cur"]) if s else "—"}</b></td></tr>' if s else ""
         miss = f'<p class="muted">Sans offre pour l’instant : {esc(", ".join(missing))}. Le total apparaît dès que tout est disponible.</p>' if missing else ""
         cards += f'''<article class="card"><header><h3>{esc(c["libelle"])}</h3>
@@ -205,23 +239,25 @@ for cat in cat_names:
         s = stats(series[pid])
         if s and s["drop"] is not None:
             alerts.append(f'{products[pid]["libelle"]} : {pct(s["drop"])}')
-        shops = sorted({sh for (p, sh) in latest_shop if p == pid})
-        lines = [("Meilleur prix", series[pid], "line")]
-        tbl = ""
-        for sh in shops:
-            r = latest_shop[(pid, sh)]
-            ref = float(last_best[pid]["prix_eur"]) if pid in last_best else None
-            diff = "" if ref is None else (f"+{float(r['prix_eur'])-ref:.2f} €".replace(".", ",") if float(r["prix_eur"]) > ref else "meilleur")
-            stale = "" if r["horodatage"] == max(x["horodatage"] for x in prices if x["produit_id"] == pid) else " · ancien relevé"
-            tbl += (f'<tr><td class="nw"><span class="sd {SHOP_CLS.get(sh, "s1")}"></span>{shoplabel(r)}{stale}</td><td><a href="{esc(r["url"])}" target="_blank" rel="noopener">{esc(r["titre"][:80])}</a></td>'
-                    f'<td class="num"><b>{fmt(float(r["prix_eur"]))}</b></td><td class="num muted">{diff}</td></tr>')
-        shop_lines = [(sh, shop_rows[(pid, sh)], f"line {SHOP_CLS.get(sh, 's1')}") for sh in shops]
-        legend = "".join(f'<span class="lg {SHOP_CLS.get(sh, "s1")}"><i></i>{esc(sh)}</span>' for sh in shops)
-        panels += f'''<article class="pp card" data-pid="{pid}" data-cat="{slug(cat)}"><header><h3>{esc(products[pid]["libelle"])}</h3>
-          <div class="tags"><span class="tag">{esc(products[pid]["gamme"])}</span><span class="tag soft">{esc(cat)}</span>{badge(s)}</div></header>
-          {statline(s)}<h4>Meilleur prix</h4>{chart(lines)}
-          <h4>Par boutique</h4><div class="legend">{legend}</div>{chart(shop_lines, h=170)}
-          <div class="tw"><table><thead><tr><th>Boutique</th><th>Offre retenue</th><th class="num">Prix</th><th class="num">Écart</th></tr></thead>{tbl}</table></div></article>'''
+        panels += product_card(pid, cat, "pp card", f' data-pid="{pid}" data-cat="{slug(cat)}"')
+
+# --- onglet Romain ----------------------------------------------------------------------------------------
+romain_html = ""
+if all(p in products for p in ROMAIN_PIDS):
+    duo_cards = ""
+    for label, comp in ROMAIN_DUOS:
+        pts = sum_series(comp)
+        s = stats(pts)
+        rows = "".join(comp_row(pid) for pid in comp if pid in last_best)
+        total = f'<tr class="tot"><td colspan="4">Total processeur + carte graphique</td><td class="num"><b>{fmt(s["cur"])}</b></td></tr>' if s else ""
+        duo_cards += f'''<article class="card"><header><h3>{esc(label)}</h3>
+          <div class="tags"><span class="tag">Processeur + carte graphique</span>{badge(s)}</div></header>
+          {statline(s)}{chart([("Total", pts, "line")])}
+          <div class="tw"><table><thead><tr><th>Composant</th><th>Boutique</th><th>Tendance</th><th class="num">7 j</th><th class="num">Prix</th></tr></thead>{rows}{total}</table></div></article>'''
+    romain_html = (f'<h3 class="grp">Les deux combinaisons</h3><div class="cfgs">{duo_cards}</div>'
+                   '<h3 class="grp">Pièce par pièce</h3><div class="cfgs">'
+                   + "".join(product_card(pid, products[pid]["categorie"], "card") for pid in ROMAIN_PIDS) + "</div>")
+romain_tab = '<button type="button" role="tab" data-v="romain">Romain</button>' if romain_html else ""
 
 alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense à regarder les prix sur Amazon.</b><br>'
              + "<br>".join(esc(a) for a in alerts) + "</div>") if alerts else ""
@@ -302,7 +338,7 @@ JS = """
   }
   try{history.replaceState(null,'','#'+(state.v==='composants'?'composants/'+state.c+'/'+state.p:state.v))}catch(e){}
  }
- function fromHash(){var h=location.hash.slice(1).split('/');state.v=h[0]==='composants'?'composants':'configurations';state.c=h[1]||state.c;state.p=h[2]||state.p;render()}
+ function fromHash(){var h=location.hash.slice(1).split('/');state.v=['composants','romain'].indexOf(h[0])>=0?h[0]:'configurations';state.c=h[1]||state.c;state.p=h[2]||state.p;render()}
  $('button',top).forEach(function(b){b.onclick=function(){state.v=b.dataset.v;render()}});
  cats.forEach(function(b){b.onclick=function(){state.c=b.dataset.cat;state.p=null;render()}});
  $('.pl button').forEach(function(b){b.onclick=function(){state.p=b.dataset.pid;render()}});
@@ -317,8 +353,9 @@ page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <div class="kpi"><span>Relevés</span><b>{len(stamps)}</b><small class="muted">{n_cfg} configs · {len(products)} composants</small></div>
 <div class="kpi"><span>Boutiques</span><b><i class="dotst{" bad" if shops_bad else ""}"></i>{shops_ok}/{len(health)} ok</b><small class="muted">généré {gen_short}</small></div></div></div>
 {alert_box}{warn_box}
-<nav class="top" role="tablist"><button type="button" role="tab" data-v="configurations">Configurations</button><button type="button" role="tab" data-v="composants">Composants</button></nav>
+<nav class="top" role="tablist"><button type="button" role="tab" data-v="configurations">Configurations</button><button type="button" role="tab" data-v="composants">Composants</button>{romain_tab}</nav>
 <section class="view" id="v-configurations">{cfg_html}</section>
+<section class="view" id="v-romain">{romain_html}</section>
 <section class="view" id="v-composants"><div class="pills cats">{cat_btns}</div><div class="pills sub">{plists}</div>{panels}</section>
 <footer><p>Chaque courbe suit le meilleur prix trouvé parmi les boutiques suivies (offres en stock et vendues par la boutique en priorité ; une offre marketplace n’est retenue que si aucune offre directe n’existe, et elle est alors signalée). Le total d’une configuration est la somme des meilleurs prix de ses composants, boutiques mélangées, livraison non incluse. Stockage de toutes les configurations : SSD SATA 250 Go + disque dur 3,5" 7200 tr/min. Cartes mères : B550 ASUS ou Gigabyte uniquement. Seule la première page de résultats de chaque boutique est lue : pour les catégories génériques, « le moins cher » est celui de cette page, pas forcément du catalogue. Amazon n’est pas suivi : une baisse d’au moins {int(ALERT_DROP*100)} % par rapport à la médiane des 7 derniers jours déclenche un rappel d’aller y regarder.</p></footer>
 </main><script>{JS}</script></body></html>'''
