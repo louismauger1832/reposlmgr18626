@@ -8,7 +8,10 @@ from zoneinfo import ZoneInfo
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ALERT_DROP = 0.07   # baisse >= 7 % vs médiane des 7 derniers jours => pointer vers Amazon
 GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
-CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
+CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement", "Écran"]
+PROMO_MIN = 0.05    # remise minimale pour apparaître dans les listes de promos
+HIST_DAYS = 30      # fenêtre du « prix habituel » d'une offre
+BARRE_DOUTEUX = 0.40  # remise affichée au-delà de laquelle le prix barré est signalé comme à vérifier
 SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
 
@@ -21,6 +24,8 @@ def rd(path):
 prices, runs = rd("data/prices.csv"), rd("data/runs.csv")
 products = {r["id"]: r for r in rd("config/products.csv")}
 configs = rd("config/configs.csv")
+offers_log, offers_now = rd("data/offers.csv"), rd("data/offers_latest.csv")
+romain = rd("config/romain.csv")
 esc = html.escape
 fmt = lambda v: "—" if v is None else f"{v:,.2f} €".replace(",", " ").replace(".", ",")
 pct = lambda v: "n/d" if v is None else f"{v:+.1f} %".replace(".", ",")
@@ -143,6 +148,80 @@ def shoplabel(r):
     return esc(r["boutique"]) + (" · marketplace" if r["marketplace"] == "1" else "") + (" · rupture" if r["en_stock"] == "0" else "")
 
 
+# --- promos : remise par offre (pas seulement le moins cher) -------------------------------------------------
+hist = defaultdict(list)   # (boutique, url) -> [(datetime, prix)] (journal des changements)
+for r in offers_log:
+    hist[(r["boutique"], r["url"])].append((datetime.fromisoformat(r["horodatage"]), float(r["prix_eur"])))
+
+
+def usual_price(key, now_dt):
+    """Médiane des prix journaliers de l'offre sur HIST_DAYS jours, hors aujourd'hui (None si < 3 jours d'historique)."""
+    pts = sorted(hist.get(key, []))
+    days, cur, i = [], None, 0
+    d = (now_dt - timedelta(days=HIST_DAYS)).date()
+    while d < now_dt.date():
+        while i < len(pts) and pts[i][0].date() <= d:
+            cur = pts[i][1]
+            i += 1
+        if cur is not None:
+            days.append(cur)
+        d += timedelta(days=1)
+    return statistics.median(days) if len(days) >= 3 else None
+
+
+promos = defaultdict(list)   # produit_id -> offres en stock triées par remise décroissante
+for r in offers_now:
+    if r["en_stock"] != "1":
+        continue
+    prix, now_dt = float(r["prix_eur"]), datetime.fromisoformat(r["horodatage"])
+    barre = float(r["prix_barre_eur"]) if r["prix_barre_eur"] else None
+    usual = usual_price((r["boutique"], r["url"]), now_dt)
+    r_aff = 1 - prix / barre if barre else None
+    r_hist = 1 - prix / usual if usual else None
+    # prix barré d'un vendeur marketplace : souvent gonflé, on ne le compte pas dans le classement (seul l'historique compte)
+    remise = max(x for x in ((None if r["marketplace"] == "1" else r_aff), r_hist, 0) if x is not None)
+    promos[r["produit_id"]].append(dict(r, prix=prix, barre=barre, usual=usual, r_aff=r_aff, r_hist=r_hist, remise=remise,
+                                        ref=max(x for x in (barre, usual, prix) if x)))
+for pid in promos:
+    promos[pid].sort(key=lambda o: (-o["remise"], o["prix"]))
+
+
+def merged_promos(pids, n=None, minimum=PROMO_MIN):
+    seen, out = set(), []
+    for o in sorted((o for p in pids for o in promos.get(p, [])), key=lambda o: (-o["remise"], o["prix"])):
+        if (o["boutique"], o["url"]) in seen or o["remise"] < minimum:
+            continue
+        seen.add((o["boutique"], o["url"]))
+        out.append(o)
+    return out[:n] if n else out
+
+
+def promo_table(offs, empty="Aucune remise d’au moins 5 % sur cette recherche pour l’instant."):
+    if not offs:
+        return f'<p class="muted">{empty}</p>'
+    rows = ""
+    for o in offs:
+        src = []
+        if o["r_aff"]:
+            doubt = (" · prix barré du vendeur, non pris en compte" if o["marketplace"] == "1"
+                     else " · prix barré à vérifier" if o["r_aff"] >= BARRE_DOUTEUX else "")
+            src.append(f'barré {fmt(o["barre"])} (−{o["r_aff"]*100:.0f} %){doubt}')
+        if o["r_hist"] and o["r_hist"] > 0:
+            src.append(f'habituel {fmt(o["usual"])} (−{o["r_hist"]*100:.0f} %)')
+        shop = esc(o["boutique"]) + (" · marketplace" if o["marketplace"] == "1" else "")
+        rows += (f'<tr><td class="num"><span class="tag promo">−{o["remise"]*100:.0f} %</span></td>'
+                 f'<td><a href="{esc(o["url"])}" target="_blank" rel="noopener">{esc(o["titre"][:90])}</a>'
+                 f'<small><span class="sd {SHOP_CLS.get(o["boutique"], "s1")}"></span>{shop} · {esc(" · ".join(src))}</small></td>'
+                 f'<td class="num"><b>{fmt(o["prix"])}</b></td><td class="num muted eco">−{fmt(o["ref"] - o["prix"])}</td></tr>')
+    return ('<div class="tw"><table class="promos"><thead><tr><th class="num">Remise</th><th>Offre</th><th class="num">Prix</th>'
+            f'<th class="num eco">Économie</th></tr></thead>{rows}</table></div>')
+
+
+def cheapest(pids):
+    offs = [o for p in pids for o in promos.get(p, [])]
+    return min(offs, key=lambda o: (o["marketplace"] == "1", o["prix"])) if offs else None
+
+
 # --- santé ------------------------------------------------------------------------------------------------
 health, last_ts, age = [], None, None
 if runs:
@@ -221,7 +300,26 @@ for cat in cat_names:
           <div class="tags"><span class="tag">{esc(products[pid]["gamme"])}</span><span class="tag soft">{esc(cat)}</span>{badge(s)}</div></header>
           {statline(s)}<h4>Meilleur prix</h4>{chart(lines)}
           <h4>Par boutique</h4><div class="legend">{legend}</div>{chart(shop_lines, h=170)}
-          <div class="tw"><table><thead><tr><th>Boutique</th><th>Offre retenue</th><th class="num">Prix</th><th class="num">Écart</th></tr></thead>{tbl}</table></div></article>'''
+          <div class="tw"><table><thead><tr><th>Boutique</th><th>Offre retenue</th><th class="num">Prix</th><th class="num">Écart</th></tr></thead>{tbl}</table></div>
+          <h4>Meilleures promos de cette recherche</h4>{promo_table(merged_promos([pid], 8))}</article>'''
+
+# --- onglet Promos -----------------------------------------------------------------------------------------
+promo_html = ""
+for cat in cat_names:
+    offs = merged_promos(cats[cat], 10)
+    promo_html += f'<h3 class="grp">{esc(cat)}</h3><article class="card">{promo_table(offs, "Aucune remise d’au moins 5 % dans cette catégorie pour l’instant.")}</article>'
+
+# --- onglet Romain -----------------------------------------------------------------------------------------
+romain_html = ""
+for sec in romain:
+    pids = [p for p in sec["produits"].split("|") if p in products]
+    low = cheapest(pids)
+    amz = "https://www.amazon.fr/s?k=" + "+".join(sec["amazon_recherche"].split())
+    low_txt = (f'Moins cher en stock : <a href="{esc(low["url"])}" target="_blank" rel="noopener">{esc(low["titre"][:70])}</a> '
+               f'— <b>{fmt(low["prix"])}</b> chez {esc(low["boutique"])}') if low else "Pas encore d’offre relevée."
+    romain_html += f'''<article class="card rom"><header><h3>{esc(sec["section"])}</h3>
+      <div class="tags"><a class="tag amz" href="{esc(amz)}" target="_blank" rel="noopener">Voir sur Amazon ↗</a></div></header>
+      <p>{low_txt}</p><h4>Promos, de la plus forte à la plus faible</h4>{promo_table(merged_promos(pids, 15))}</article>'''
 
 alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense à regarder les prix sur Amazon.</b><br>'
              + "<br>".join(esc(a) for a in alerts) + "</div>") if alerts else ""
@@ -273,16 +371,18 @@ table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px}th{fon
 tbody tr:hover td,table tr:hover td{background:color-mix(in srgb,var(--soft) 9%,transparent)}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}th.num{text-align:right}tr.tot td{border-top:2px solid var(--line);font-size:14.5px}.spark{width:64px;height:22px}td.nw{white-space:nowrap}
 .notice{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--card);border-radius:12px;padding:13px 18px;margin:18px 0;font-size:14px;box-shadow:var(--sh)}.notice.alert{border-left-color:var(--alert)}.notice.warn{border-left-color:var(--mut)}
-nav.top{display:inline-flex;gap:4px;padding:5px;margin:26px 0 0;border-radius:15px;background:var(--chip);border:1px solid var(--line);box-shadow:inset 0 1px 3px rgba(0,0,0,.06)}
+nav.top{display:inline-flex;flex-wrap:wrap;max-width:100%;gap:4px;padding:5px;margin:26px 0 0;border-radius:15px;background:var(--chip);border:1px solid var(--line);box-shadow:inset 0 1px 3px rgba(0,0,0,.06)}
 nav.top button{font:inherit;font-size:14.5px;font-weight:600;background:none;border:0;border-radius:11px;color:var(--mut);padding:9px 22px;cursor:pointer;transition:all .22s}
 nav.top button:hover{color:var(--ink)}nav.top button[aria-selected=true]{background:var(--card);color:var(--acc);box-shadow:var(--sh)}
 .pills{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 0}.pills.sub{margin-top:10px}
 .pills button{font:inherit;font-size:13px;background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:6px 15px;cursor:pointer;box-shadow:0 1px 2px rgba(18,32,52,.05);transition:all .2s}
 .pills button:hover{border-color:var(--soft);color:var(--ink);transform:translateY(-1px)}.pills button[aria-selected=true]{background:linear-gradient(135deg,var(--acc),var(--s1));border-color:transparent;color:var(--card);box-shadow:0 6px 14px -6px var(--s1)}
 .pp{margin-top:24px;max-width:780px}
+.tag.promo{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent);font-weight:600;white-space:nowrap}
+.tag.amz{font-weight:600}.rom{margin-top:18px}.rom p{margin:0 0 6px}#v-promos>p,#v-romain>p{margin:22px 0 0;max-width:780px;font-size:13.5px}
 .js .view,.js .pl,.js .pp{display:none}.js .view.on,.js .pl.on,.js .pp.on{display:block}.js .pl.on{display:flex}.pl{flex-wrap:wrap;gap:7px}
 footer{margin-top:56px;font-size:12.5px;color:var(--mut);max-width:780px}
-@media(max-width:560px){.cfgs{grid-template-columns:1fr}main{padding-top:20px}.hero{padding:20px}h1{font-size:23px}.kpi{min-width:calc(50% - 5px);flex:1}nav.top button{padding:9px 14px}}
+@media(max-width:560px){.cfgs{grid-template-columns:1fr}main{padding-top:20px}.hero{padding:20px}h1{font-size:23px}.kpi{min-width:calc(50% - 5px);flex:1}nav.top button{padding:8px 12px;font-size:13.5px}.eco{display:none}table.promos td{padding:8px 4px}}
 """
 JS = """
 (function(){
@@ -302,7 +402,7 @@ JS = """
   }
   try{history.replaceState(null,'','#'+(state.v==='composants'?'composants/'+state.c+'/'+state.p:state.v))}catch(e){}
  }
- function fromHash(){var h=location.hash.slice(1).split('/');state.v=h[0]==='composants'?'composants':'configurations';state.c=h[1]||state.c;state.p=h[2]||state.p;render()}
+ function fromHash(){var h=location.hash.slice(1).split('/');state.v=['composants','promos','romain'].indexOf(h[0])>=0?h[0]:'configurations';state.c=h[1]||state.c;state.p=h[2]||state.p;render()}
  $('button',top).forEach(function(b){b.onclick=function(){state.v=b.dataset.v;render()}});
  cats.forEach(function(b){b.onclick=function(){state.c=b.dataset.cat;state.p=null;render()}});
  $('.pl button').forEach(function(b){b.onclick=function(){state.p=b.dataset.pid;render()}});
@@ -317,10 +417,12 @@ page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <div class="kpi"><span>Relevés</span><b>{len(stamps)}</b><small class="muted">{n_cfg} configs · {len(products)} composants</small></div>
 <div class="kpi"><span>Boutiques</span><b><i class="dotst{" bad" if shops_bad else ""}"></i>{shops_ok}/{len(health)} ok</b><small class="muted">généré {gen_short}</small></div></div></div>
 {alert_box}{warn_box}
-<nav class="top" role="tablist"><button type="button" role="tab" data-v="configurations">Configurations</button><button type="button" role="tab" data-v="composants">Composants</button></nav>
+<nav class="top" role="tablist"><button type="button" role="tab" data-v="configurations">Configurations</button><button type="button" role="tab" data-v="composants">Composants</button><button type="button" role="tab" data-v="promos">Promos</button><button type="button" role="tab" data-v="romain">Romain</button></nav>
 <section class="view" id="v-configurations">{cfg_html}</section>
+<section class="view" id="v-promos"><p class="muted">Classement par remise, pas par prix : une offre apparaît si elle est en stock et à au moins 5 % sous son prix barré (affiché par la boutique) ou sous son prix habituel (médiane de nos relevés sur 30 jours, dès 3 jours d’historique).</p>{promo_html}</section>
+<section class="view" id="v-romain"><p class="muted">RTX 5060, Ryzen 7 5800X et écrans d’au moins 144 Hz, classés par remise. Amazon n’est pas relevé automatiquement (le site bloque les requêtes automatisées) : le lien ouvre la recherche correspondante.</p>{romain_html}</section>
 <section class="view" id="v-composants"><div class="pills cats">{cat_btns}</div><div class="pills sub">{plists}</div>{panels}</section>
-<footer><p>Chaque courbe suit le meilleur prix trouvé parmi les boutiques suivies (offres en stock et vendues par la boutique en priorité ; une offre marketplace n’est retenue que si aucune offre directe n’existe, et elle est alors signalée). Le total d’une configuration est la somme des meilleurs prix de ses composants, boutiques mélangées, livraison non incluse. Stockage de toutes les configurations : SSD SATA 250 Go + disque dur 3,5" 7200 tr/min. Cartes mères : B550 ASUS ou Gigabyte uniquement. Seule la première page de résultats de chaque boutique est lue : pour les catégories génériques, « le moins cher » est celui de cette page, pas forcément du catalogue. Amazon n’est pas suivi : une baisse d’au moins {int(ALERT_DROP*100)} % par rapport à la médiane des 7 derniers jours déclenche un rappel d’aller y regarder.</p></footer>
+<footer><p>Chaque courbe suit le meilleur prix trouvé parmi les boutiques suivies (offres en stock et vendues par la boutique en priorité ; une offre marketplace n’est retenue que si aucune offre directe n’existe, et elle est alors signalée). Le total d’une configuration est la somme des meilleurs prix de ses composants, boutiques mélangées, livraison non incluse. Stockage de toutes les configurations : SSD SATA 250 Go + disque dur 3,5" 7200 tr/min. Cartes mères : B550 ASUS ou Gigabyte uniquement. Les onglets Promos et Romain classent les offres par remise (prix barré affiché, ou prix habituel de l’offre d’après nos relevés), pour qu’un modèle en grosse promo ne soit pas masqué par un modèle simplement moins cher. Seule la première page de résultats de chaque boutique est lue : pour les catégories génériques, « le moins cher » est celui de cette page, pas forcément du catalogue. Amazon n’est pas suivi : une baisse d’au moins {int(ALERT_DROP*100)} % par rapport à la médiane des 7 derniers jours déclenche un rappel d’aller y regarder.</p></footer>
 </main><script>{JS}</script></body></html>'''
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 open(os.path.join(ROOT, "docs", "index.html"), "w", encoding="utf-8").write(page)
