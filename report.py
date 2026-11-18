@@ -121,7 +121,7 @@ def chart(lines, w=560, h=190):
         out.append("".join(f'<circle class="dot {dcls}" cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{r}"><title>{esc(label)} · {a:%d/%m %H:%M} · {fmt(b)}</title></circle>' for a, b in pts))
     d0, d1 = min(d for d, _ in allp), max(d for d, _ in allp)
     out.append(f'<text class="ax" x="{px}" y="{h-9}">{d0:%d/%m/%y %Hh}</text><text class="ax" x="{w-10}" y="{h-9}" text-anchor="end">{d1:%d/%m/%y %Hh}</text>')
-    return f'<svg viewBox="0 0 {w} {h}" role="img" aria-label="Évolution du prix">{"".join(out)}</svg>'
+    return f'<svg class="ch" viewBox="0 0 {w} {h}" role="img" aria-label="Évolution du prix">{"".join(out)}</svg>'
 
 
 def spark(pts, w=84, h=22):
@@ -132,7 +132,7 @@ def spark(pts, w=84, h=22):
     t0, t1 = pts[0][0].timestamp(), pts[-1][0].timestamp()
     X = lambda d: 2 + (w - 4) * (d.timestamp() - t0) / (t1 - t0 or 1)
     Y = lambda v: h / 2 if hi == lo else 2 + (h - 4) * (1 - (v - lo) / (hi - lo))
-    return f'<svg class="spark" viewBox="0 0 {w} {h}"><polyline class="line" points="{" ".join(f"{X(a):.1f},{Y(b):.1f}" for a, b in pts)}"/></svg>'
+    return f'<svg class="spark ch" viewBox="0 0 {w} {h}"><polyline class="line" points="{" ".join(f"{X(a):.1f},{Y(b):.1f}" for a, b in pts)}"/></svg>'
 
 
 def statline(s):
@@ -273,10 +273,8 @@ shops_bad = shops_ok != len(health)
 n_cfg = len(configs)
 
 CSS = """
-:root{--bg:#f3f5f8;--bg2:#e6edf6;--card:#fff;--card2:#f9fafc;--chip:#f0f3f7;--ink:#1b2634;--mut:#66758a;--acc:#35597f;--soft:#a9bccd;--line:#e3e8ee;--alert:#b4553a;--ok:#2f9e6e;
---s1:#1f3f66;--s2:#14917f;--s3:#d9822b;--sh:0 1px 2px rgba(18,32,52,.06),0 10px 28px -14px rgba(18,32,52,.28);--sh2:0 2px 4px rgba(18,32,52,.08),0 20px 40px -16px rgba(18,32,52,.38)}
-@media(prefers-color-scheme:dark){:root{--bg:#0f141a;--bg2:#16202b;--card:#18202a;--card2:#151c25;--chip:#1f2833;--ink:#e7edf3;--mut:#8d9aab;--acc:#8fb4da;--soft:#3f5f80;--line:#27313d;--alert:#e08a6d;--ok:#4cc38a;
---s1:#8db3ee;--s2:#4fd1bf;--s3:#f2a95c;--sh:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);--sh2:0 2px 4px rgba(0,0,0,.5),0 20px 40px -16px rgba(0,0,0,.8)}}
+:root{--bg:#fff;--bg2:#f2f2f2;--card:#fff;--card2:#fff;--chip:#f4f4f4;--ink:#000;--mut:#555;--acc:#000;--soft:#999;--line:#000;--alert:#d10000;--ok:#00873c;--hi:#ffd400;
+--s1:#000;--s2:#0057ff;--s3:#f5b400;--sh:4px 4px 0 #000;--sh2:7px 7px 0 #000;color-scheme:light}
 *{box-sizing:border-box}body{margin:0;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(1200px 460px at 50% -140px,var(--bg2),transparent) no-repeat,var(--bg)}
 main{max-width:1100px;margin:0 auto;padding:36px 16px 64px}a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
 .hero{position:relative;overflow:hidden;display:flex;flex-wrap:wrap;gap:22px 32px;align-items:center;justify-content:space-between;padding:26px 30px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(135deg,var(--card) 0%,var(--card2) 55%,var(--bg2) 100%);box-shadow:var(--sh)}
@@ -317,6 +315,29 @@ nav.top button:hover{color:var(--ink)}nav.top button[aria-selected=true]{backgro
 .pills button:hover{border-color:var(--soft);color:var(--ink);transform:translateY(-1px)}.pills button[aria-selected=true]{background:linear-gradient(135deg,var(--acc),var(--s1));border-color:transparent;color:var(--card);box-shadow:0 6px 14px -6px var(--s1)}
 .pp{margin-top:24px;max-width:780px}
 .js .view,.js .pl,.js .pp{display:none}.js .view.on,.js .pl.on,.js .pp.on{display:block}.js .pl.on{display:flex}.pl{flex-wrap:wrap;gap:7px}
+/* thème noir et blanc */
+.card,.hero,.kpi,nav.top,.pills button,.notice,.stats>div,.lg{border-width:2px;border-color:#000}.card,.hero{border-radius:6px}.kpi,.stats>div{border-radius:4px;box-shadow:none}
+.hero{background:#fff}.hero::before{width:8px;background:repeating-linear-gradient(45deg,#000 0 6px,var(--hi) 6px 12px)}.logo{border-radius:6px;background:#000;box-shadow:3px 3px 0 var(--hi)}
+.card{background:#fff;transition:transform .18s,box-shadow .18s}.cfgs .card:hover{transform:translate(-3px,-3px);box-shadow:var(--sh2);border-color:#000}
+h3.grp::before{background:#000;height:4px}.tag{border-color:#000;color:#000;background:#fff}.tag.soft{border-color:#999;color:#555}
+nav.top{border-radius:6px;background:#fff;box-shadow:var(--sh)}nav.top button{border-radius:3px;color:#000}nav.top button[aria-selected=true]{background:#000;color:#fff;box-shadow:none}
+.pills button{border-radius:4px;color:#000;box-shadow:2px 2px 0 #000}.pills button:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 #000;border-color:#000}
+.pills button[aria-selected=true]{background:var(--hi);color:#000;border-color:#000;box-shadow:3px 3px 0 #000}
+summary{color:#000;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}a{color:#000;text-decoration:underline;text-decoration-color:var(--hi);text-decoration-thickness:3px;text-underline-offset:2px}
+tbody tr:hover td,table tr:hover td{background:#fff7cc}.notice.alert{background:#fff0f0}
+/* animations */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes stamp{0%{transform:scale(1)}40%{transform:scale(.9) rotate(-2deg)}70%{transform:scale(1.06) rotate(1deg)}100%{transform:none}}
+@keyframes wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.js .view.on>.card,.js .view.on .cfgs>.card,.js .pp.on{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.js .view.on .cfgs>.card:nth-child(2){animation-delay:.07s}.js .view.on .cfgs>.card:nth-child(3){animation-delay:.14s}.js .view.on .cfgs>.card:nth-child(n+4){animation-delay:.2s}
+.js .view.on h3.grp::before{transform-origin:left;animation:bar .5s ease both}
+nav.top button.tap,.pills button.tap{animation:stamp .35s ease}
+.js .ch{clip-path:inset(0 100% 0 0)}.js .ch.in{animation:wipe .9s cubic-bezier(.6,0,.2,1) forwards}.js .spark.in{animation-duration:.6s}
+.js .ch.in .dot{transform-box:fill-box;transform-origin:center;animation:pop .3s .7s ease both}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}.js .ch{clip-path:none}}
 footer{margin-top:56px;font-size:12.5px;color:var(--mut);max-width:780px}
 @media(max-width:560px){.cfgs{grid-template-columns:1fr}main{padding-top:20px}.hero{padding:20px}h1{font-size:23px}.kpi{min-width:calc(50% - 5px);flex:1}nav.top button{padding:9px 14px}}
 """
@@ -327,6 +348,9 @@ JS = """
  document.documentElement.classList.add('js');
  var cats=$('.pills.cats button'),pls=$('.pl'),pps=$('.pp'),state={v:'configurations',c:null,p:null};
  function sel(btns,key,val){btns.forEach(function(b){b.setAttribute('aria-selected',b.dataset[key]===val)})}
+ var io='IntersectionObserver' in window?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.__chs.forEach(function(c){c.classList.add('in')});io.unobserve(e.target)}})},{threshold:.2}):null;
+ function reveal(){$('.view.on .ch').forEach(function(c){if(!c.getClientRects().length)return;c.classList.remove('in');var t=c.parentNode;if(!t.__chs||t.__chs.indexOf(c)<0)t.__chs=(t.__chs||[]).concat([c]);if(io){io.unobserve(t);io.observe(t)}else c.classList.add('in')})}
+ function tap(b){b.classList.remove('tap');void b.offsetWidth;b.classList.add('tap')}
  function render(){
   views.forEach(function(v){v.classList.toggle('on',v.id==='v-'+state.v)});sel($('button',top),'v',state.v);
   if(state.v==='composants'){
@@ -336,12 +360,14 @@ JS = """
    pls.forEach(function(x){x.classList.toggle('on',x===pl)});sel(cats,'cat',state.c);sel($('button',pl),'pid',state.p);
    pps.forEach(function(x){x.classList.toggle('on',x.dataset.pid===state.p)});
   }
+  reveal();
   try{history.replaceState(null,'','#'+(state.v==='composants'?'composants/'+state.c+'/'+state.p:state.v))}catch(e){}
  }
  function fromHash(){var h=location.hash.slice(1).split('/');state.v=['composants','romain'].indexOf(h[0])>=0?h[0]:'configurations';state.c=h[1]||state.c;state.p=h[2]||state.p;render()}
- $('button',top).forEach(function(b){b.onclick=function(){state.v=b.dataset.v;render()}});
- cats.forEach(function(b){b.onclick=function(){state.c=b.dataset.cat;state.p=null;render()}});
- $('.pl button').forEach(function(b){b.onclick=function(){state.p=b.dataset.pid;render()}});
+ $('button',top).forEach(function(b){b.onclick=function(){tap(b);state.v=b.dataset.v;render()}});
+ cats.forEach(function(b){b.onclick=function(){tap(b);state.c=b.dataset.cat;state.p=null;render()}});
+ $('.pl button').forEach(function(b){b.onclick=function(){tap(b);state.p=b.dataset.pid;render()}});
+ $('details').forEach(function(d){d.addEventListener('toggle',function(){$('.ch',d).forEach(function(c){c.classList.remove('in');if(d.open){void c.getBoundingClientRect();c.classList.add('in')}})})});
  window.addEventListener('hashchange',fromHash);fromHash();
 })();
 """
