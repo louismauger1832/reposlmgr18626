@@ -11,8 +11,8 @@ GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
 SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
-# onglet Romain : cartes graphiques et disques durs envisagés (plus de processeur)
-ROMAIN_PIDS = ["gpu-rtx5060", "gpu-rtx3060-12g", "hdd-1to-7200", "hdd-2to-7200"]
+# onglet Romain : il lui reste UNE carte graphique (RTX 5060, RTX 3060 12 Go ou équivalent AMD) et UN disque dur (1 ou 2 To)
+ROMAIN_PIDS = ["gpu-rtx5060", "gpu-rx9060xt", "gpu-rtx3060-12g", "gpu-rx7600", "hdd-1to-7200", "hdd-2to-7200"]
 
 
 def rd(path):
@@ -245,7 +245,7 @@ if all(p in products for p in ROMAIN_PIDS):
     romain_html = "".join(
         f'<h3 class="grp">{titre}</h3><div class="cfgs">'
         + "".join(product_card(pid, products[pid]["categorie"], "card") for pid in ROMAIN_PIDS if pid.startswith(pfx)) + "</div>"
-        for titre, pfx in [("Cartes graphiques", "gpu-"), ("Disques durs", "hdd-")])
+        for titre, pfx in [("Carte graphique (une au choix)", "gpu-"), ("Disque dur (un au choix)", "hdd-")])
 romain_tab = '<button type="button" role="tab" data-v="romain">Romain</button>' if romain_html else ""
 
 alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense à regarder les prix sur Amazon.</b><br>'
