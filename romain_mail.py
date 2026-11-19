@@ -113,8 +113,7 @@ def delta(new, before):
 
 
 when = datetime.fromisoformat(last_ts)
-creneau = "matin" if when.hour < 14 else "soir"
-subject = f"Carte graphique + disque dur — relevé du {when:%d/%m} ({creneau})"
+subject = f"Carte graphique + disque dur — relevé du {when:%d/%m}"
 cheapest = {pfx: min((p for p in price if p.startswith(pfx)), key=price.get) for _, pfx in GROUPES}
 total = sum(price[p] for p in cheapest.values())
 old_total = (sum(min(v for p, v in old.items() if v is not None and p.startswith(pfx)) for _, pfx in GROUPES)
