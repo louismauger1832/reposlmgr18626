@@ -11,10 +11,8 @@ GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
 SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
-# onglet Romain : un processeur et deux cartes graphiques envisagées ; un duo = processeur + carte graphique seuls
-ROMAIN_PIDS = ["cpu-5800x", "gpu-rtx5060", "gpu-rtx3060-12g"]
-ROMAIN_DUOS = [("Ryzen 7 5800X + RTX 5060", ["cpu-5800x", "gpu-rtx5060"]),
-               ("Ryzen 7 5800X + RTX 3060 12 Go", ["cpu-5800x", "gpu-rtx3060-12g"])]
+# onglet Romain : cartes graphiques et disques durs envisagés (plus de processeur)
+ROMAIN_PIDS = ["gpu-rtx5060", "gpu-rtx3060-12g", "hdd-1to-7200", "hdd-2to-7200"]
 
 
 def rd(path):
@@ -244,19 +242,10 @@ for cat in cat_names:
 # --- onglet Romain ----------------------------------------------------------------------------------------
 romain_html = ""
 if all(p in products for p in ROMAIN_PIDS):
-    duo_cards = ""
-    for label, comp in ROMAIN_DUOS:
-        pts = sum_series(comp)
-        s = stats(pts)
-        rows = "".join(comp_row(pid) for pid in comp if pid in last_best)
-        total = f'<tr class="tot"><td colspan="4">Total processeur + carte graphique</td><td class="num"><b>{fmt(s["cur"])}</b></td></tr>' if s else ""
-        duo_cards += f'''<article class="card"><header><h3>{esc(label)}</h3>
-          <div class="tags"><span class="tag">Processeur + carte graphique</span>{badge(s)}</div></header>
-          {statline(s)}{chart([("Total", pts, "line")])}
-          <div class="tw"><table><thead><tr><th>Composant</th><th>Boutique</th><th>Tendance</th><th class="num">7 j</th><th class="num">Prix</th></tr></thead>{rows}{total}</table></div></article>'''
-    romain_html = (f'<h3 class="grp">Les deux combinaisons</h3><div class="cfgs">{duo_cards}</div>'
-                   '<h3 class="grp">Pièce par pièce</h3><div class="cfgs">'
-                   + "".join(product_card(pid, products[pid]["categorie"], "card") for pid in ROMAIN_PIDS) + "</div>")
+    romain_html = "".join(
+        f'<h3 class="grp">{titre}</h3><div class="cfgs">'
+        + "".join(product_card(pid, products[pid]["categorie"], "card") for pid in ROMAIN_PIDS if pid.startswith(pfx)) + "</div>"
+        for titre, pfx in [("Cartes graphiques", "gpu-"), ("Disques durs", "hdd-")])
 romain_tab = '<button type="button" role="tab" data-v="romain">Romain</button>' if romain_html else ""
 
 alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense à regarder les prix sur Amazon.</b><br>'
