@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Relevé des prix (LDLC, Materiel.net, Rue du Commerce). Écriture en append uniquement."""
+"""Relevé des prix (LDLC, Materiel.net, Rue du Commerce, + sources ciblées comme TopAchat). Écriture en append uniquement."""
 import csv, re, sys, time, urllib.parse, urllib.request, urllib.error, os
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -64,6 +64,30 @@ SHOPS = {
 }
 
 
+# Sources ciblées : une page catégorie par produit suivi (pas de moteur de recherche exploitable).
+# TopAchat (FR) : la recherche redirige vers l'accueil, mais la page catégorie « RTX 5060 » embarque les offres en JSON.
+# Pour ajouter une boutique ici, il faut aussi que son domaine soit autorisé par le réseau de l'environnement.
+def _topachat_items(html, base):
+    out = []
+    for chunk in html.split('{ref:"')[1:]:
+        m = re.match(r'(\w+)",label:"((?:[^"\\]|\\.)*)",sublabel:"((?:[^"\\]|\\.)*)"', chunk)
+        price = re.search(r"price_final:([\d.]+)", chunk)
+        avail = re.search(r'\},availability:"([\w-]+)"', chunk)
+        url = re.search(r'url_product:"([^"]+)"', chunk)
+        if not (m and price and url):
+            continue
+        out.append(dict(titre=m.group(2), desc=m.group(3), prix=float(price.group(1)), url=urllib.parse.urljoin(base, url.group(1)),
+                        marketplace=False, stock_txt="" if avail and avail.group(1) in ("available", "limited-stock") else "rupture"))
+    return out
+
+
+TARGETED = {
+    "TopAchat": dict(base="https://www.topachat.com", parse=_topachat_items, pages={
+        "gpu-rtx5060": "https://www.topachat.com/pages/produits_cat_est_micro_puis_rubrique_est_wgfx_pcie_puis_f_est_58-13473.html",
+    }),
+}
+
+
 def main():
     tz = ZoneInfo("Europe/Paris")
     now = datetime.now(tz)
@@ -72,15 +96,20 @@ def main():
     products = list(csv.DictReader(open(os.path.join(ROOT, "config", "products.csv"), encoding="utf-8")))
     os.makedirs(os.path.join(ROOT, "data"), exist_ok=True)
     price_rows, run_rows = [], []
-    for shop, cfg in SHOPS.items():
+    by_id = {p["id"]: p for p in products}
+    def search(p, cfg):
+        soup = BeautifulSoup(fetch(cfg["url"].format(q=urllib.parse.quote(p["requete"]))), "lxml")
+        return _items(soup, cfg["sel"], cfg["base"], cfg["title"], cfg["link"])
+    jobs = [(shop, [(p, lambda p=p, cfg=cfg: search(p, cfg)) for p in products]) for shop, cfg in SHOPS.items()]
+    jobs += [(shop, [(by_id[pid], lambda u=u, cfg=cfg: cfg["parse"](fetch(u), cfg["base"])) for pid, u in cfg["pages"].items() if pid in by_id])
+             for shop, cfg in TARGETED.items()]
+    for shop, tasks in jobs:
         n_page = n_valid = 0
         errs = []
-        for p in products:
+        for p, get_items in tasks:
             time.sleep(2)
             try:
-                html = fetch(cfg["url"].format(q=urllib.parse.quote(p["requete"])))
-                soup = BeautifulSoup(html, "lxml")
-                items = _items(soup, cfg["sel"], cfg["base"], cfg["title"], cfg["link"])
+                items = get_items()
             except Exception as e:
                 errs.append(f'{p["id"]}: {e}')
                 continue

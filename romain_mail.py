@@ -17,13 +17,10 @@ from datetime import datetime, timedelta
 ROOT = os.path.dirname(os.path.abspath(__file__))
 TO = "romain.dufour06@gmail.com"
 PAGE_URL = "https://louismauger1832.github.io/reposlmgr18626/#romain"
-# Il reste à Romain : UNE carte graphique (RTX 5060, RTX 3060 12 Go ou équivalent AMD) et UN disque dur (1 ou 2 To)
-PIDS = {"gpu-rtx5060": "GeForce RTX 5060", "gpu-rx9060xt": "Radeon RX 9060 XT (équivalent AMD de la 5060)",
-        "gpu-rtx3060-12g": "GeForce RTX 3060 12 Go", "gpu-rx7600": "Radeon RX 7600 (équivalent AMD de la 3060)",
-        "hdd-1to-7200": "HDD 1 To 7200 tr/min", "hdd-2to-7200": "HDD 2 To 7200 tr/min"}
-GROUPES = [("Carte graphique (une au choix)", "gpu-"), ("Disque dur (un au choix)", "hdd-")]
+# Il reste à Romain : UNE carte graphique GeForce RTX 5060 (mise à jour du 22/11/2026, avant : GPU au choix + disque dur)
+PID, NAME = "gpu-rtx5060", "GeForce RTX 5060"
+PIDS = {PID: NAME}
 LOG = os.path.join(ROOT, "data", "mails_romain.csv")
-LOG_COLS = ["envoye_le", "releve"] + list(PIDS)
 NOTES = os.path.join(ROOT, "data", "notes_romain.csv")
 
 
@@ -42,26 +39,27 @@ def notes_perso(depuis):
 fmt = lambda v: f"{v:,.2f} €".replace(",", " ").replace(".", ",")
 
 
-def best_rows():
-    """Meilleure offre par produit et par relevé (même règle que report.py : boutique directe et en stock d'abord)."""
+def load():
+    """Par relevé : {boutique: ligne retenue} pour la RTX 5060."""
     by = {}
     for r in csv.DictReader(open(os.path.join(ROOT, "data", "prices.csv"), encoding="utf-8")):
-        if r["produit_id"] in PIDS:
-            by.setdefault(r["horodatage"], {}).setdefault(r["produit_id"], []).append(r)
-    return {ts: {pid: min(rs, key=lambda r: (r["marketplace"] == "1", r["en_stock"] == "0", float(r["prix_eur"])))
-                 for pid, rs in d.items()} for ts, d in by.items()}
+        if r["produit_id"] == PID:
+            by.setdefault(r["horodatage"], {})[r["boutique"]] = r
+    return by
 
 
-best = best_rows()
-if not best:
-    print("RIEN (aucun relevé pour ces pièces)")
+pick = lambda rows: min(rows, key=lambda r: (r["marketplace"] == "1", r["en_stock"] == "0", float(r["prix_eur"])))
+by_ts = load()
+if not by_ts:
+    print("RIEN (aucun relevé RTX 5060)")
     sys.exit(0)
-last_ts = max(best)
-cur = {pid: best[last_ts][pid] for pid in PIDS if pid in best[last_ts]}  # pièces sans prix ce relevé : ignorées
-if not all(any(p.startswith(pfx) for p in cur) for _, pfx in GROUPES):
-    print("RIEN (aucune carte graphique ou aucun disque dur dans le dernier relevé)")
-    sys.exit(0)
-price = {pid: float(r["prix_eur"]) for pid, r in cur.items()}
+last_ts = max(by_ts)
+cur = by_ts[last_ts]
+best = pick(cur.values())
+price = float(best["prix_eur"])
+shops = sorted(cur, key=lambda sh: (cur[sh]["en_stock"] == "0", float(cur[sh]["prix_eur"])))
+LOG_COLS = ["envoye_le", "releve", PID] + [f"{PID}@{sh}" for sh in sorted(cur)]
+
 
 def read_log():
     """Lignes du journal sous forme de dict ; une ligne commençant par « envoye_le » est un nouvel en-tête."""
@@ -85,75 +83,74 @@ if "--enregistrer" in sys.argv:
         w = csv.writer(f)
         if log_head != LOG_COLS:
             w.writerow(LOG_COLS)
-        w.writerow([datetime.now().astimezone().isoformat(timespec="seconds"), last_ts] + [f"{price[p]:.2f}" if p in price else "" for p in PIDS])
+        w.writerow([datetime.now().astimezone().isoformat(timespec="seconds"), last_ts, f"{price:.2f}"]
+                   + [cur[sh]["prix_eur"] for sh in sorted(cur)])
     print("enregistré")
     sys.exit(0)
 
 if prev and prev["releve"] == last_ts:
     print("RIEN (pas de nouveau relevé depuis le dernier mail)")
     sys.exit(0)
-old = {pid: float(prev[pid]) if prev.get(pid) else None for pid in PIDS} if prev else None
-moved = [pid for pid in price if old is None or old[pid] is None or abs(price[pid] - old[pid]) >= 0.01]
-if not moved:
-    print("RIEN (aucun mouvement de prix depuis le dernier mail)")
+num = lambda v: float(v) if v not in (None, "") else None
+old = num(prev.get(PID)) if prev else None
+if old is not None and abs(price - old) < 0.01:
+    print("RIEN (meilleur prix RTX 5060 inchangé depuis le dernier mail)")
     sys.exit(0)
 
 
-def ago7(pid):
-    now = datetime.fromisoformat(last_ts)
-    ref = [ts for ts in sorted(best) if datetime.fromisoformat(ts) <= now - timedelta(days=7) and pid in best[ts]]
-    return float(best[ref[-1]][pid]["prix_eur"]) if ref else None
+def ago7(shop=None):
+    lim = datetime.fromisoformat(last_ts) - timedelta(days=7)
+    ref = [ts for ts in sorted(by_ts) if datetime.fromisoformat(ts) <= lim and (shop is None or shop in by_ts[ts])]
+    if not ref:
+        return None
+    rows = by_ts[ref[-1]]
+    return float((rows[shop] if shop else pick(rows.values()))["prix_eur"])
 
 
 def delta(new, before):
     if before is None:
-        return ""
+        return "n/d"
     d = new - before
     return "inchangé" if abs(d) < 0.01 else (f"{'+' if d > 0 else '−'}{fmt(abs(d))}")
 
 
+esc = htmlmod.escape
 when = datetime.fromisoformat(last_ts)
-subject = f"Carte graphique + disque dur — relevé du {when:%d/%m}"
-cheapest = {pfx: min((p for p in price if p.startswith(pfx)), key=price.get) for _, pfx in GROUPES}
-total = sum(price[p] for p in cheapest.values())
-old_total = (sum(min(v for p, v in old.items() if v is not None and p.startswith(pfx)) for _, pfx in GROUPES)
-             if old and all(any(v is not None and p.startswith(pfx) for p, v in old.items()) for _, pfx in GROUPES) else None)
-tot_chg = f" ({delta(total, old_total)} depuis le dernier mail)" if old_total is not None else ""
-reste_html = ("<p><b>Il te reste à acheter : une carte graphique et un disque dur.</b><br>"
-              f"Le moins cher aujourd'hui : {PIDS[cheapest['gpu-']]} à {fmt(price[cheapest['gpu-']])} "
-              f"+ {PIDS[cheapest['hdd-']]} à {fmt(price[cheapest['hdd-']])} = <b>{fmt(total)}</b>{tot_chg}.</p>")
-reste_txt = ("Il te reste à acheter : une carte graphique et un disque dur.\n"
-             f"Le moins cher aujourd'hui : {PIDS[cheapest['gpu-']]} à {fmt(price[cheapest['gpu-']])} "
-             f"+ {PIDS[cheapest['hdd-']]} à {fmt(price[cheapest['hdd-']])} = {fmt(total)}{tot_chg}.\n\n")
-blocs_html, blocs_txt = "", []
-for titre, pfx in GROUPES:
-    rows_html, rows_txt = "", []
-    for pid, name in PIDS.items():
-        if not pid.startswith(pfx) or pid not in cur:
-            continue
-        r = cur[pid]
-        shop = r["boutique"] + (" (vendeur tiers)" if r["marketplace"] == "1" else "")
-        chg = ("nouveau" if old[pid] is None else delta(price[pid], old[pid])) if old else "premier envoi"
-        w7 = ago7(pid)
-        s7 = delta(price[pid], w7) if w7 is not None else "n/d"
-        star = " ★" if cheapest[pfx] == pid else ""
-        rows_html += (f'<tr><td><a href="{r["url"]}">{name}</a></td><td>{shop}</td><td align="right"><b>{fmt(price[pid])}</b>{star}</td>'
-                      f'<td align="right">{chg}</td><td align="right">{s7}</td></tr>')
-        rows_txt.append(f"- {name} : {fmt(price[pid])}{star} chez {shop} ({chg} depuis le dernier mail, {s7} sur 7 jours)")
-    blocs_html += (f'<p><b>{titre}</b></p><table cellpadding="6" style="border-collapse:collapse;border:2px solid #000">'
-                   '<tr style="background:#000;color:#fff"><th align="left">Pièce</th><th align="left">Meilleure offre</th>'
-                   '<th align="right">Prix</th><th align="right">Depuis le dernier mail</th><th align="right">Sur 7 jours</th></tr>'
-                   f'{rows_html}</table>')
-    blocs_txt.append(f"{titre} :\n" + "\n".join(rows_txt))
-blocs_html += '<p style="color:#555;font-size:12px">★ = le moins cher de sa catégorie</p>'
+subject = f"RTX 5060 — {fmt(price)} chez {best['boutique']} — relevé du {when:%d/%m}"
+shop_lbl = lambda r: r["boutique"] + (" (vendeur tiers)" if r["marketplace"] == "1" else "") + (" — rupture" if r["en_stock"] == "0" else "")
+chg = delta(price, old) if prev else "premier envoi"
+w7 = ago7()
+head_html = (f'<p><b>Meilleur prix RTX 5060 : {fmt(price)}</b> chez {esc(shop_lbl(best))} '
+             f'(<a href="{esc(best["url"])}">{esc(best["titre"])}</a>).<br>'
+             f'Depuis le dernier mail : {chg} · sur 7 jours : {delta(price, w7)}.</p>')
+head_txt = (f"Meilleur prix RTX 5060 : {fmt(price)} chez {shop_lbl(best)} ({best['titre']}).\n"
+            f"Depuis le dernier mail : {chg} · sur 7 jours : {delta(price, w7)}.\n{best['url']}\n\n")
+rows_html, rows_txt = "", []
+for sh in shops:
+    r = cur[sh]
+    p = float(r["prix_eur"])
+    prev_rows = by_ts.get(prev["releve"], {}) if prev else {}  # prix de la boutique au relevé annoncé dans le dernier mail
+    o = float(prev_rows[sh]["prix_eur"]) if sh in prev_rows else None
+    c = ("nouveau" if o is None else delta(p, o)) if prev else "premier envoi"
+    s7 = delta(p, ago7(sh))
+    star = " ★" if r is best else ""
+    rows_html += (f'<tr><td>{esc(shop_lbl(r))}</td><td><a href="{esc(r["url"])}">{esc(r["titre"][:70])}</a></td>'
+                  f'<td align="right"><b>{fmt(p)}</b>{star}</td><td align="right">{c}</td><td align="right">{s7}</td></tr>')
+    rows_txt.append(f"- {shop_lbl(r)} : {fmt(p)}{star} — {r['titre'][:70]} ({c} depuis le dernier mail, {s7} sur 7 jours)")
+table_html = ('<p><b>Meilleure RTX 5060 par boutique</b></p><table cellpadding="6" style="border-collapse:collapse;border:2px solid #000">'
+              '<tr style="background:#000;color:#fff"><th align="left">Boutique</th><th align="left">Modèle</th>'
+              '<th align="right">Prix</th><th align="right">Depuis le dernier mail</th><th align="right">Sur 7 jours</th></tr>'
+              f'{rows_html}</table><p style="color:#555;font-size:12px">★ = le moins cher (en stock et vendu par la boutique en priorité)</p>')
+sources = ", ".join(sorted(cur))
 
 notes_html, notes_txt = notes_perso(datetime.fromisoformat(prev["envoye_le"]) if prev else None)
-intro = "Il y a du mouvement sur les prix que tu suis" if old else "Voici où en sont les prix des pièces que tu suis"
+intro = "Le prix de la RTX 5060 a bougé" if prev else "Voici où en est le prix de la RTX 5060"
 html = f"""<p>Salut Romain,</p>
 <p>{intro} (relevé du {when:%d/%m/%Y à %H:%M}).</p>
-{notes_html}{reste_html}{blocs_html}
+{notes_html}{head_html}{table_html}
 <p>Courbes et détail par boutique : <a href="{PAGE_URL}">{PAGE_URL}</a></p>
-<p style="color:#555;font-size:12px">Prix relevés sur LDLC, Materiel.net et Rue du Commerce, hors livraison. Amazon n'est pas suivi.</p>"""
-text = (f"Salut Romain,\n\n{intro} (relevé du {when:%d/%m/%Y à %H:%M}).\n\n" + notes_txt + reste_txt
-        + "\n\n".join(blocs_txt) + "\n\n★ = le moins cher de sa catégorie" + f"\n\nCourbes et détail : {PAGE_URL}\n\nPrix hors livraison, LDLC / Materiel.net / Rue du Commerce.")
+<p style="color:#555;font-size:12px">Prix relevés sur {esc(sources)}, hors livraison. Amazon n'est pas suivi.</p>"""
+text = (f"Salut Romain,\n\n{intro} (relevé du {when:%d/%m/%Y à %H:%M}).\n\n" + notes_txt + head_txt
+        + "Meilleure RTX 5060 par boutique :\n" + "\n".join(rows_txt) + "\n\n★ = le moins cher"
+        + f"\n\nCourbes et détail : {PAGE_URL}\n\nPrix hors livraison, {sources}.")
 print(json.dumps({"to": [TO], "subject": subject, "html": html, "text": text}, ensure_ascii=False))
