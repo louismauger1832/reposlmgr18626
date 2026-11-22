@@ -9,10 +9,10 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 ALERT_DROP = 0.07   # baisse >= 7 % vs médiane des 7 derniers jours => pointer vers Amazon
 GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
-SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3"}
+SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3", "TopAchat": "s4"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
-# onglet Romain : il lui reste UNE carte graphique (RTX 5060, RTX 3060 12 Go ou équivalent AMD) et UN disque dur (1 ou 2 To)
-ROMAIN_PIDS = ["gpu-rtx5060", "gpu-rx9060xt", "gpu-rtx3060-12g", "gpu-rx7600", "hdd-1to-7200", "hdd-2to-7200"]
+# onglet Romain : il lui reste UNE carte graphique GeForce RTX 5060 (mise à jour du 22/11/2026)
+ROMAIN_PIDS = ["gpu-rtx5060"]
 
 
 def rd(path):
@@ -245,7 +245,7 @@ if all(p in products for p in ROMAIN_PIDS):
     romain_html = "".join(
         f'<h3 class="grp">{titre}</h3><div class="cfgs">'
         + "".join(product_card(pid, products[pid]["categorie"], "card") for pid in ROMAIN_PIDS if pid.startswith(pfx)) + "</div>"
-        for titre, pfx in [("Carte graphique (une au choix)", "gpu-"), ("Disque dur (un au choix)", "hdd-")])
+        for titre, pfx in [("Carte graphique : GeForce RTX 5060", "gpu-")])
 romain_tab = '<button type="button" role="tab" data-v="romain">Romain</button>' if romain_html else ""
 
 alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense à regarder les prix sur Amazon.</b><br>'
@@ -263,7 +263,7 @@ n_cfg = len(configs)
 
 CSS = """
 :root{--bg:#fff;--bg2:#f2f2f2;--card:#fff;--card2:#fff;--chip:#f4f4f4;--ink:#000;--mut:#555;--acc:#000;--soft:#999;--line:#000;--alert:#d10000;--ok:#00873c;--hi:#ffd400;
---s1:#000;--s2:#0057ff;--s3:#f5b400;--sh:4px 4px 0 #000;--sh2:7px 7px 0 #000;color-scheme:light}
+--s1:#000;--s2:#0057ff;--s3:#f5b400;--s4:#e5004b;--sh:4px 4px 0 #000;--sh2:7px 7px 0 #000;color-scheme:light}
 *{box-sizing:border-box}body{margin:0;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(1200px 460px at 50% -140px,var(--bg2),transparent) no-repeat,var(--bg)}
 main{max-width:1100px;margin:0 auto;padding:36px 16px 64px}a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
 .hero{position:relative;overflow:hidden;display:flex;flex-wrap:wrap;gap:22px 32px;align-items:center;justify-content:space-between;padding:26px 30px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(135deg,var(--card) 0%,var(--card2) 55%,var(--bg2) 100%);box-shadow:var(--sh)}
@@ -286,11 +286,11 @@ h3.grp::before{content:"";width:22px;height:3px;border-radius:3px;background:lin
 .stats span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}.stats b{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
 svg{width:100%;height:auto;display:block}.line{fill:none;stroke:var(--acc);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}.area{stroke:none}
 .dot{fill:var(--acc);stroke:var(--card);stroke-width:1.5}line.grid{stroke:var(--line);stroke-dasharray:2 5}.ax{fill:var(--mut);font-size:13px}
-.line.s1{stroke:var(--s1)}.line.s2{stroke:var(--s2);stroke-dasharray:9 5}.line.s3{stroke:var(--s3);stroke-dasharray:.1 6.5;stroke-width:3.4}
-.dot.s1{fill:var(--s1)}.dot.s2{fill:var(--s2)}.dot.s3{fill:var(--s3)}
+.line.s1{stroke:var(--s1)}.line.s2{stroke:var(--s2);stroke-dasharray:9 5}.line.s3{stroke:var(--s3);stroke-dasharray:.1 6.5;stroke-width:3.4}.line.s4{stroke:var(--s4);stroke-dasharray:14 4 2 4}
+.dot.s1{fill:var(--s1)}.dot.s2{fill:var(--s2)}.dot.s3{fill:var(--s3)}.dot.s4{fill:var(--s4)}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}.lg{display:inline-flex;align-items:center;gap:9px;padding:4px 13px 4px 11px;border-radius:99px;background:var(--chip);border:1px solid var(--line);font-size:13px;font-weight:500}
-.lg i{display:block;width:24px;height:0;border-top:3.5px solid var(--s1);border-radius:3px}.lg.s2 i{border-top:3.5px dashed var(--s2)}.lg.s3 i{border-top:3.5px dotted var(--s3)}
-.sd{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:var(--s1)}.sd.s2{background:var(--s2)}.sd.s3{background:var(--s3)}
+.lg i{display:block;width:24px;height:0;border-top:3.5px solid var(--s1);border-radius:3px}.lg.s2 i{border-top:3.5px dashed var(--s2)}.lg.s3 i{border-top:3.5px dotted var(--s3)}.lg.s4 i{border-top:3.5px dashed var(--s4)}
+.sd{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:var(--s1)}.sd.s2{background:var(--s2)}.sd.s3{background:var(--s3)}.sd.s4{background:var(--s4)}
 details{margin:10px 0 6px;font-size:13.5px}summary{cursor:pointer;color:var(--acc);font-weight:500;padding:8px 2px}summary:hover{text-decoration:underline}.tw{overflow-x:auto;border-radius:12px}
 table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px}th{font-size:11px;font-weight:600;color:var(--mut);text-align:left;text-transform:uppercase;letter-spacing:.05em;padding:6px 6px}td{padding:8px 6px;border-top:1px solid var(--line);vertical-align:middle}
 tbody tr:hover td,table tr:hover td{background:color-mix(in srgb,var(--soft) 9%,transparent)}
@@ -363,7 +363,7 @@ JS = """
 page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Suivi prix hardware AM4</title><style>{CSS}</style></head><body><main>
 <div class="hero"><div class="brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 8-9"/><path d="M15 5h5v5"/></svg></div>
-<div><h1>Suivi prix hardware</h1><p class="sub">PC AM4 · DDR4 · LDLC, Materiel.net, Rue du Commerce</p></div></div>
+<div><h1>Suivi prix hardware</h1><p class="sub">PC AM4 · DDR4 · LDLC, Materiel.net, Rue du Commerce (+ TopAchat pour la RTX 5060)</p></div></div>
 <div class="kpis"><div class="kpi"><span>Dernier relevé</span><b>{last_short}</b><small class="muted">{age_txt}</small></div>
 <div class="kpi"><span>Relevés</span><b>{len(stamps)}</b><small class="muted">{n_cfg} configs · {len(products)} composants</small></div>
 <div class="kpi"><span>Boutiques</span><b><i class="dotst{" bad" if shops_bad else ""}"></i>{shops_ok}/{len(health)} ok</b><small class="muted">généré {gen_short}</small></div></div></div>
