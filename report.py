@@ -11,7 +11,7 @@ GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
 SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3", "TopAchat": "s4"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
-# onglet Romain retiré le 27/11/2026 : Romain a tout acheté. Remplacé par l'onglet « Achats restants ».
+# onglet « Achats restants » : prix relevés à la main dans config/achats_restants.csv
 
 
 def rd(path):
