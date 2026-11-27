@@ -1,6 +1,6 @@
 # Suivi prix hardware (AM4 / DDR4)
 
-Relevés automatiques LDLC, Materiel.net et Rue du Commerce, toutes les 3 heures (Europe/Paris). La GeForce RTX 5060 (seule pièce qu'il reste à Romain) est aussi relevée sur TopAchat (sources ciblées : `TARGETED` dans `collect.py`). Amazon n'est pas suivi (voir le rappel dans le rapport).
+Relevés automatiques LDLC, Materiel.net et Rue du Commerce, toutes les 3 heures (Europe/Paris). La GeForce RTX 5060 est aussi relevée sur TopAchat (sources ciblées : `TARGETED` dans `collect.py`). Amazon n'est pas suivi (voir le rappel dans le rapport).
 
 - `config/products.csv` : composants suivis (gamme bas/milieu/haut, requête, filtres regex)
 - `config/configs.csv` : configurations (budget, composants)

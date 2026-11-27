@@ -11,8 +11,7 @@ GAP_HOURS = 4       # relevés toutes les 3 h : au-delà, on signale un trou
 CAT_ORDER = ["CPU", "GPU", "Carte mère", "RAM", "Stockage", "Alimentation", "Boîtier", "Refroidissement"]
 SHOP_CLS = {"LDLC": "s1", "Materiel.net": "s2", "Rue du Commerce": "s3", "TopAchat": "s4"}
 GAMME_ORDER = {"bas": 0, "base": 0, "milieu": 1, "haut": 2}
-# onglet Romain : il lui reste UNE carte graphique GeForce RTX 5060 (mise à jour du 22/11/2026)
-ROMAIN_PIDS = ["gpu-rtx5060"]
+# onglet Romain retiré le 27/11/2026 : Romain a tout acheté. Remplacé par l'onglet « Achats restants ».
 
 
 def rd(path):
@@ -239,14 +238,41 @@ for cat in cat_names:
             alerts.append(f'{products[pid]["libelle"]} : {pct(s["drop"])}')
         panels += product_card(pid, cat, "pp card", f' data-pid="{pid}" data-cat="{slug(cat)}"')
 
-# --- onglet Romain ----------------------------------------------------------------------------------------
-romain_html = ""
-if all(p in products for p in ROMAIN_PIDS):
-    romain_html = "".join(
-        f'<h3 class="grp">{titre}</h3><div class="cfgs">'
-        + "".join(product_card(pid, products[pid]["categorie"], "card") for pid in ROMAIN_PIDS if pid.startswith(pfx)) + "</div>"
-        for titre, pfx in [("Carte graphique : GeForce RTX 5060", "gpu-")])
-romain_tab = '<button type="button" role="tab" data-v="romain">Romain</button>' if romain_html else ""
+# --- onglet Achats restants (prix relevés à la main dans config/achats_restants.csv, prix vide = non vérifié) ---
+achats = rd("config/achats_restants.csv")
+achats_html = ""
+if achats:
+    _dates = sorted({a["date_releve"] for a in achats if a["date_releve"]})
+    _date_txt = datetime.fromisoformat(_dates[-1]).strftime("%d/%m/%Y") if _dates else "—"
+    _rows, _best, _comps = "", {}, []
+    for a in achats:
+        c = a["composant"]
+        if c not in _comps:
+            _comps.append(c)
+        prix = float(a["prix_eur"]) if a["prix_eur"] else None
+        if prix is not None:
+            _best[c] = min(_best.get(c, prix), prix)
+        d = datetime.fromisoformat(a["date_releve"]).strftime("%d/%m/%Y") if a["date_releve"] else "—"
+        lien = f'<a href="{esc(a["url"])}" rel="noopener" target="_blank">voir</a>' if a["url"] else "—"
+        note = f'<small>{esc(a["note"])}</small>' if a["note"] else ""
+        _rows += (f'<tr><td class="nw">{esc(c)}</td><td>{esc(a["reference"])}{note}</td>'
+                  f'<td class="num">{fmt(prix) if prix is not None else "non vérifié"}</td><td class="nw">{esc(a["site"])}</td>'
+                  f'<td class="nw">{d}</td><td>{lien}</td></tr>')
+    _verif = [c for c in _comps if c in _best]
+    _manq = [c for c in _comps if c not in _best]
+    _tot_lbl = "Total des prix vérifiés" + (" (partiel)" if _manq else "")
+    _tot_det = " + ".join(f"{esc(c)} {fmt(_best[c])}" for c in _verif) + (f" · hors {esc(', '.join(_manq))} (non vérifié)" if _manq else "")
+    achats_html = (
+        f'<h3 class="grp">Achats restants · prix relevés le {_date_txt}</h3>'
+        f'<div class="card"><header><h3>{len(_comps)} composants à acheter</h3><div class="tags">'
+        + "".join(f'<span class="tag{"" if c in _best else " off"}">{esc(c)}</span>' for c in _comps)
+        + f'</div></header><div class="tw"><table><thead><tr><th>Composant</th><th>Référence</th><th class="num">Prix relevé</th>'
+        f'<th>Site</th><th>Date du relevé</th><th>Lien</th></tr></thead><tbody>{_rows}'
+        f'<tr class="tot"><td colspan="2"><b>{_tot_lbl}</b><small>meilleur prix par composant : {_tot_det}</small></td>'
+        f'<td class="num"><b>{fmt(sum(_best[c] for c in _verif)) if _verif else "—"}</b></td><td colspan="3"></td></tr></tbody></table></div></div>'
+        '<div class="notice warn">Les prix changent souvent : vérifie la date du relevé et le prix sur le site avant d’acheter. '
+        '« non vérifié » signifie qu’aucun prix fiable n’a été confirmé sur deux sources.</div>')
+achats_tab = '<button type="button" role="tab" data-v="achats">Achats restants</button>' if achats_html else ""
 
 alert_box = (f'<div class="notice alert"><b>Baisse notable détectée — pense à regarder les prix sur Amazon.</b><br>'
              + "<br>".join(esc(a) for a in alerts) + "</div>") if alerts else ""
@@ -352,7 +378,7 @@ JS = """
   reveal();
   try{history.replaceState(null,'','#'+(state.v==='composants'?'composants/'+state.c+'/'+state.p:state.v))}catch(e){}
  }
- function fromHash(){var h=location.hash.slice(1).split('/');state.v=['composants','romain'].indexOf(h[0])>=0?h[0]:'configurations';state.c=h[1]||state.c;state.p=h[2]||state.p;render()}
+ function fromHash(){var h=location.hash.slice(1).split('/');state.v=['composants','achats'].indexOf(h[0])>=0?h[0]:'configurations';state.c=h[1]||state.c;state.p=h[2]||state.p;render()}
  $('button',top).forEach(function(b){b.onclick=function(){tap(b);state.v=b.dataset.v;render()}});
  cats.forEach(function(b){b.onclick=function(){tap(b);state.c=b.dataset.cat;state.p=null;render()}});
  $('.pl button').forEach(function(b){b.onclick=function(){tap(b);state.p=b.dataset.pid;render()}});
@@ -368,9 +394,9 @@ page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <div class="kpi"><span>Relevés</span><b>{len(stamps)}</b><small class="muted">{n_cfg} configs · {len(products)} composants</small></div>
 <div class="kpi"><span>Boutiques</span><b><i class="dotst{" bad" if shops_bad else ""}"></i>{shops_ok}/{len(health)} ok</b><small class="muted">généré {gen_short}</small></div></div></div>
 {alert_box}{warn_box}
-<nav class="top" role="tablist"><button type="button" role="tab" data-v="configurations">Configurations</button><button type="button" role="tab" data-v="composants">Composants</button>{romain_tab}</nav>
+<nav class="top" role="tablist"><button type="button" role="tab" data-v="configurations">Configurations</button><button type="button" role="tab" data-v="composants">Composants</button>{achats_tab}</nav>
 <section class="view" id="v-configurations">{cfg_html}</section>
-<section class="view" id="v-romain">{romain_html}</section>
+<section class="view" id="v-achats">{achats_html}</section>
 <section class="view" id="v-composants"><div class="pills cats">{cat_btns}</div><div class="pills sub">{plists}</div>{panels}</section>
 <footer><p>Chaque courbe suit le meilleur prix trouvé parmi les boutiques suivies (offres en stock et vendues par la boutique en priorité ; une offre marketplace n’est retenue que si aucune offre directe n’existe, et elle est alors signalée). Le total d’une configuration est la somme des meilleurs prix de ses composants, boutiques mélangées, livraison non incluse. Stockage de toutes les configurations : SSD SATA 250 Go + disque dur 3,5" 7200 tr/min. Cartes mères : B550 ASUS ou Gigabyte uniquement. Seule la première page de résultats de chaque boutique est lue : pour les catégories génériques, « le moins cher » est celui de cette page, pas forcément du catalogue. Amazon n’est pas suivi : une baisse d’au moins {int(ALERT_DROP*100)} % par rapport à la médiane des 7 derniers jours déclenche un rappel d’aller y regarder.</p></footer>
 </main><script>{JS}</script></body></html>'''
